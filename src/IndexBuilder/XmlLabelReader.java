@@ -10,19 +10,12 @@ import java.util.ArrayList;
 
 public class XmlLabelReader {
 	
+	public static final String[] labelNames = {"pmcid", "publisher", "journal", "abstract", "categories", "authors", "title", "body"};
 	private final NXMLFileReader xmlFile;
-    private ArrayList<String> labelNames;
-	
+  
 	public XmlLabelReader(String documentPath) throws UnsupportedEncodingException, IOException {
-		this.labelNames = new ArrayList<String>();
-		labelNames.add("publisher"); labelNames.add("journal");
-		labelNames.add("abstract"); labelNames.add("title");
-		labelNames.add("pmcid"); labelNames.add("body");
-		labelNames.add("categories"); labelNames.add("authors");
 		this.xmlFile = new NXMLFileReader(new File(documentPath));
 	}
-	
-	public ArrayList<String> getLabelNames() { return this.labelNames; }
 	
 	public String getLabelText(String labelName) {
 		if(labelName.equals("publisher")) { return this.xmlFile.getPublisher(); }
