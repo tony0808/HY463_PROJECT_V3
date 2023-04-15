@@ -1,4 +1,4 @@
-package IndexBuilder;
+package indexbuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +14,7 @@ public class XmlLabelReader {
     private ArrayList<String> labelNames;
 	
 	public XmlLabelReader(String documentPath) throws UnsupportedEncodingException, IOException {
+		this.labelNames = new ArrayList<String>();
 		labelNames.add("publisher"); labelNames.add("journal");
 		labelNames.add("abstract"); labelNames.add("title");
 		labelNames.add("pmcid"); labelNames.add("body");
