@@ -14,9 +14,9 @@ import java.util.Map;
 public class Tester {
 
 	public static void main(String[] args) throws IOException {
-		String corpusPath = "C:\\SmallCollection\\Topic_1\\0";
+		String corpusPath = "C:\\MiniCollection\\dummy";
 		IndexBuilder ibuilder = new IndexBuilder(corpusPath);
-		ibuilder.buildIndex();
+		ibuilder.createIndex();
 		ibuilder.printIndex();
 	}
 	
