@@ -14,10 +14,10 @@ import java.util.Map;
 public class Tester {
 
 	public static void main(String[] args) throws IOException {
-		String corpusPath = "C:\\MiniCollection\\dummy";
+		String corpusPath = "C:\\MiniCollection";
 		IndexBuilder ibuilder = new IndexBuilder(corpusPath);
 		ibuilder.createIndex();
-		ibuilder.printIndex();
+		ibuilder.writeIndexToDisk("C:\\CollectionIndex\\invertedFile.txt");;
 	}
 	
 

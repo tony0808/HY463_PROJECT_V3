@@ -2,6 +2,8 @@ package indexbuilder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -16,6 +18,24 @@ public class IndexBuilder {
 		this.block = new HashMap<>();
 		initDocumentIdMap((new DirectoryScanner(documentsDirectory)).get_document_paths());
 		initLabelIdMap();
+	}
+	
+	public void writeIndexToDisk(String filename) throws IOException {
+		FileWriter fwriter = new FileWriter(new File(filename));
+		for(Map.Entry<String, PostingList> index : this.block.entrySet()) {
+			String word = index.getKey();
+			fwriter.write(word + "\n");
+			HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> postingList = index.getValue().getPostingList();
+			for(Map.Entry<Integer, HashMap<Integer, ArrayList<Integer>>> posting : postingList.entrySet()) {
+				String document = this.documents.get(posting.getKey());
+				fwriter.write("\t" + document + "\n");
+				for(Map.Entry<Integer, ArrayList<Integer>> positions : posting.getValue().entrySet()) {
+					String label = this.labels.get(positions.getKey());
+					fwriter.write("\t\t" + label + " : " + positions.getValue() + "\n");
+				}
+			}
+		}
+		fwriter.close();
 	}
 	
 	public void printIndex() {
@@ -38,27 +58,22 @@ public class IndexBuilder {
 	public void createIndex() throws UnsupportedEncodingException, IOException {
 		for(int docid = 1; docid <= this.documents.size(); docid++) {
 			for(int labelid = 1; labelid <= this.labels.size(); labelid++) {
-				XmlLabelReader labelReader = new XmlLabelReader(documents.get(docid));
-				String labelText = labelReader.getLabelText(this.labels.get(labelid));
-				Tokenizer tokenizer = new Tokenizer(labelText);
+				Tokenizer tokenizer = new Tokenizer((new XmlLabelReader(documents.get(docid))).getLabelText(this.labels.get(labelid)));
 				for(Map.Entry<String, ArrayList<Integer>> token : tokenizer.get_tokens().entrySet()) {
-					String word = token.getKey();
-					ArrayList<Integer> positions = token.getValue();
-					PostingList postingList = block.get(word);
+					PostingList postingList = block.get(token.getKey());
 					if(postingList == null) {
 						postingList = new PostingList();
-						postingList.addNewPostingList(docid, labelid, positions);
+						postingList.addNewPostingList(docid, labelid, token.getValue());
 					}
 					else {
 						if(!postingList.hasPositionsList(docid)) 
 							postingList.createNewPositionList(docid);
-						postingList.addPositionsList(docid, labelid, positions);
+						postingList.addPositionsList(docid, labelid, token.getValue());
 					}
-					this.block.put(word, postingList);
+					this.block.put(token.getKey(), postingList);
 				}
 			}
 		}
-
 	}
 	
 	private void initDocumentIdMap(ArrayList<String> documents) {

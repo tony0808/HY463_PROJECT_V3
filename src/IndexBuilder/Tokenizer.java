@@ -9,7 +9,7 @@ public class Tokenizer {
 	
 	private static final String STOPWORDFILENAME = "C:\\Users\\Admin\\Desktop\\earino_2023\\hy463\\project\\2023-3-EkftonisiResourcesSoftware\\3_Resources_Stoplists\\stopwordsEn.txt";
 	private static String[] stopwords = (new FileWordReader(STOPWORDFILENAME)).getWords();
-	private static final String WORD_REGEX = "\\b\\w+\\b";
+	private static final String WORD_REGEX = "\\b[a-zA-Z_]+\\b";
 	private String text;
 	private HashMap<String, ArrayList<Integer>> wordPositionMap;
 	
