@@ -1,26 +1,21 @@
 package main;
 
 import java.io.IOException;
-import indexbuilder.Tokenizer;
-import java.io.UnsupportedEncodingException;
-import indexbuilder.XmlLabelReader;
-import indexbuilder.FileWordReader;
 import indexbuilder.IndexBuilder;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class Tester {
-
-	public static void main(String[] args) throws IOException {
-		String corpusPath = "C:\\MiniCollection";
-		IndexBuilder ibuilder = new IndexBuilder(corpusPath);
+	// 4577, 4532, 4262, 3641
+	public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+		String corpusPath = "C:\\SmallCollection\\Topic_1\\0";
+		String targetDirectory = "C:\\CollectionIndex";
+		long ts = System.currentTimeMillis();
+		IndexBuilder ibuilder = new IndexBuilder(corpusPath, targetDirectory);
 		ibuilder.createIndex();
-		ibuilder.writeIndexToDisk("C:\\CollectionIndex\\invertedFile.txt");;
+		long tf = System.currentTimeMillis();
+		double time = (tf - ts) / 1000.0;
+		System.out.println(time);
 	}
-	
-
 }
 
 

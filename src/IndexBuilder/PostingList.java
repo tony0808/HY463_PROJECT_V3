@@ -10,13 +10,8 @@ public class PostingList {
 	
 	public PostingList() { this.postingList = new HashMap<>(); }
 	
-	public HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> getPostingList() {
-		return this.postingList;
-	}
-	
-	public boolean hasPositionsList(int docId) {
-		return this.postingList.containsKey(docId);
-	}
+	public HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> getPostingList() { return this.postingList; }
+	public boolean hasPositionsList(int docId) { return this.postingList.containsKey(docId); }
 	
 	public void addNewPostingList(int docId, int labelId, ArrayList<Integer> positions) {
 		HashMap<Integer, ArrayList<Integer>> labelWordPositionsMap = new HashMap<>();
@@ -40,5 +35,19 @@ public class PostingList {
 			tf += labelWordPositionEntry.getValue().size();
 		}
 		return tf;
+	}
+	
+	public long getSize() {
+		long size = 0L;
+		for(Integer docid : this.postingList.keySet()) {
+			size += Integer.BYTES;
+			HashMap<Integer, ArrayList<Integer>> labelPositions = this.postingList.get(docid);
+			for(Integer labelid : labelPositions.keySet()) {
+				size += Integer.BYTES;
+				ArrayList<Integer> positions = labelPositions.get(labelid);
+				size += positions.size() * Integer.BYTES;
+			}
+		}
+		return size;
 	}
 }

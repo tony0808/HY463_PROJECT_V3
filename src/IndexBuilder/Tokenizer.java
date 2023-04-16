@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.HashMap;
+import mitos.stemmer.Stemmer;
 
 public class Tokenizer {
 	
@@ -21,7 +22,9 @@ public class Tokenizer {
 		Matcher matcher = pattern.matcher(this.text);
 		while(matcher.find()) {
 			String word = matcher.group();
-			if(isWordStopword(word)) continue;
+			if(isWordStopword(word) || isSingleChar(word)) continue;
+			word = toLowerCase(word);
+			word = Stemmer.Stem(word);
 			int position = matcher.start();
 			if(!this.wordPositionMap.containsKey(word)) {
 				ArrayList<Integer> positions = new ArrayList<Integer>();
@@ -30,6 +33,15 @@ public class Tokenizer {
 			this.wordPositionMap.get(word).add(position);
  		}
 	}
+	
+	private String toLowerCase(String str) {
+	    if (str == null) { return null; }
+	    char[] chars = str.toCharArray();
+	    for (int i = 0; i < chars.length; i++) { chars[i] = Character.toLowerCase(chars[i]); }
+	    return new String(chars);
+	}
+
+	private boolean isSingleChar(String str) { return (str != null && str.length() == 1); }
 	
 	private boolean isWordStopword(String word) {
 		int start = 0;
