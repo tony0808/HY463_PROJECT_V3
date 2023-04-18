@@ -59,11 +59,14 @@ public class IndexFileReaderWriter {
 				}
 			}
 		}
+		freaderA.close();
+		freaderB.close();
+		fwriter.close();
 	}
 	
 	private static int mergeTwoBlocks(String[] blockA, String[] blockB, RandomAccessFile fwriter) throws IOException {
-		String wordA = getBlockWord(blockA);
-		String wordB = getBlockWord(blockB);
+		String wordA = getWord(blockA);
+		String wordB = getWord(blockB);
 		if(wordA.compareTo(wordB) < 0) {
 			writeBlockToDisk(blockA, fwriter);
 			return -1;
@@ -74,7 +77,7 @@ public class IndexFileReaderWriter {
 		}
 		else {
 			// merge document lists 
-			int mergedDocFreq = getDocFreq(blockA) + getDocFreq(blockB);
+			int mergedDocFreq = getDF(blockA) + getDF(blockB) - getNumberOfSameDocIds(blockA, blockB);
 			String mergedString = "w " + wordA + " " + mergedDocFreq + '\n';
 			fwriter.writeBytes(mergedString);
 			mergeDocumentLists(blockA, blockB, fwriter);
@@ -82,70 +85,95 @@ public class IndexFileReaderWriter {
 		}
 	}
 	
+	private static int getNumberOfSameDocIds(String[] blockA, String[] blockB) {
+		ArrayList<Integer> docIndexesA = getDocIndexes(blockA);
+		ArrayList<Integer> docIndexesB = getDocIndexes(blockB);
+		Integer[] docIdsA = new Integer[docIndexesA.size()];
+		Integer[] docIdsB = new Integer[docIndexesB.size()];
+		for(int i=0; i<docIndexesA.size(); i++) { docIdsA[i] = getDocId(blockA, docIndexesA.get(i)); }
+		for(int i=0; i<docIndexesB.size(); i++) { docIdsB[i] = getDocId(blockB, docIndexesB.get(i)); }
+		int count = 0, i = 0, j = 0;
+		while(i < docIdsA.length && j < docIdsB.length) {
+			if(docIdsA[i] == docIdsB[j]) { count++; i++; j++; }
+			else if(docIdsA[i] < docIdsB[j]) { i++; }
+			else { j++; }
+		}
+		return count;
+	}
+	
 	private static void writeBlockToDisk(String[] block, RandomAccessFile fwriter) throws IOException {
 		for(String str : block) fwriter.writeBytes(str + '\n');
 	}
 	
 	private static void mergeDocumentLists(String[] blockA, String[] blockB, RandomAccessFile fwriter) throws IOException {
-		Integer[] docListA = getDocIndexes(blockA);
-		Integer[] docListB = getDocIndexes(blockB);	
+		ArrayList<Integer> docListA = getDocIndexes(blockA);
+		ArrayList<Integer> docListB = getDocIndexes(blockB);	
 		int i = 0;
 		int j = 0;
-		while((i!=docListA.length) || (j!=docListB.length)) {
-			if(i == docListA.length) {
-				writeDocumentEntryToDisk(blockB, docListB[j], getLabelFreq(blockB, docListB[j]), fwriter);
+		while((i!=docListA.size()) || (j!=docListB.size())) {
+			if(i == docListA.size()) {
+				writeDocumentEntryToDisk(blockB, docListB.get(j), fwriter);
 				j++;
 			}
-			else if(j == docListB.length) {
-				writeDocumentEntryToDisk(blockA, docListA[i], getLabelFreq(blockA, docListA[i]), fwriter);
+			else if(j == docListB.size()) {
+				writeDocumentEntryToDisk(blockA, docListA.get(i), fwriter);
 				i++;
-			}
-			else if(getDocId(blockA, docListA[i]) < getDocId(blockB, docListB[j])) {
-				writeDocumentEntryToDisk(blockA, docListA[i], getLabelFreq(blockA, docListA[i]), fwriter);
-				i++;
-			}
-			else if(getDocId(blockA, docListA[i]) > getDocId(blockB, docListB[j])) {
-				writeDocumentEntryToDisk(blockB, docListB[j], getLabelFreq(blockB, docListB[j]), fwriter);
-				j++;
 			}
 			else {
-				// merge labels list
-				int mergedLabelFreq = getLabelFreq(blockA, docListA[i]) + getLabelFreq(blockB, docListB[j]);
-				int mergedTermFreq = getTermFreq(blockA, docListA[i]) + getTermFreq(blockB, docListB[j]);
-				String mergedString = "d " + getDocId(blockA, docListA[i]) + " " + mergedTermFreq + " " + mergedLabelFreq + '\n';
-				fwriter.writeBytes(mergedString);
-				mergeLabelsList(blockA, docListA[i], blockB, docListB[j], fwriter);
-				i++;
-				j++;
+				int docIdA = getDocId(blockA, docListA.get(i));
+				int docIdB = getDocId(blockB, docListB.get(j));
+				if(docIdA < docIdB) {
+					writeDocumentEntryToDisk(blockA, docListA.get(i), fwriter);
+					i++;
+				}
+				else if(docIdA > docIdB) {
+					writeDocumentEntryToDisk(blockB, docListB.get(j), fwriter);
+					j++;
+				}
+				else {
+					// merge labels list
+	 				int mergedLabelFreq = getLF(blockA, docListA.get(i)) + getLF(blockB, docListB.get(j));
+					int mergedTermFreq = getTF(blockA, docListA.get(i)) + getTF(blockB, docListB.get(j));
+					String mergedString = "d " + docIdA + " " + mergedTermFreq + " " + mergedLabelFreq + '\n';
+					fwriter.writeBytes(mergedString);
+					mergeLabelsList(blockA, blockB, docListA.get(i), docListB.get(j), fwriter);
+					i++;
+					j++;
+				}
 			}
+			
 		}
 	}
 	
-	private static void mergeLabelsList(String[] blockA, int docIndexA, String blockB[], int docIndexB, RandomAccessFile fwriter) throws IOException {
-		Integer[] labelListA = getLabelIndexes(blockA, docIndexA);
-		Integer[] labelListB = getLabelIndexes(blockB, docIndexB);
+	private static void mergeLabelsList(String[] blockA, String blockB[], int docIndexA, int docIndexB, RandomAccessFile fwriter) throws IOException {
+		ArrayList<Integer >labelListA = getLabelIndexes(blockA, docIndexA);
+		ArrayList<Integer> labelListB = getLabelIndexes(blockB, docIndexB);
 		int i=0;
 		int j=0;
-		while((i!=labelListA.length) || (j!=labelListB.length)) {
-			if(i == labelListA.length) {
-				writeLabelEntryToDisk(blockB, labelListB[j], fwriter);
+		while((i!=labelListA.size()) || (j!=labelListB.size())) {
+			if(i == labelListA.size()) {
+				writeLabelEntryToDisk(blockB, labelListB.get(j), fwriter);
 				j++;
 			}
-			else if(j == labelListB.length) {
-				writeLabelEntryToDisk(blockA, labelListA[i], fwriter);
+			else if(j == labelListB.size()) {
+				writeLabelEntryToDisk(blockA, labelListA.get(i), fwriter);
 				i++;
-			}
-			else if(getLabelid(blockA, labelListA[i]) < getLabelid(blockB, labelListB[j])) {
-				writeLabelEntryToDisk(blockA, labelListA[i], fwriter);
-				i++;
-			}
-			else if(getLabelid(blockA, labelListA[i]) > getLabelid(blockB, labelListB[j])) {
-				writeLabelEntryToDisk(blockB, labelListB[j], fwriter);
-				j++;
 			}
 			else {
-				System.out.println("should not be here. big error");
-				System.exit(1);
+				int labelidA = getLabelid(blockA, labelListA.get(i));
+				int labelidB = getLabelid(blockB, labelListB.get(j));
+				if(labelidA < labelidB) {
+					writeLabelEntryToDisk(blockA, labelListA.get(i), fwriter);
+					i++;
+				}
+				else if(labelidA > labelidB) {
+					writeLabelEntryToDisk(blockB, labelListB.get(j), fwriter);
+					j++;
+				}
+				else {
+					System.out.println("should not be here. big error");
+					System.exit(1);
+				}
 			}
 		}
 	}
@@ -155,31 +183,37 @@ public class IndexFileReaderWriter {
 		fwriter.writeBytes(block[index+1] + '\n');
 	}
 	
-	private static void writeDocumentEntryToDisk(String[] block, int index, int lf, RandomAccessFile fwriter) throws IOException {
+	private static void writeDocumentEntryToDisk(String[] block, int index, RandomAccessFile fwriter) throws IOException {
+		int lf = getLF(block, index);
 		fwriter.writeBytes(block[index] + '\n');
 		for(int i=1; i<=lf*2; i++) {
 			fwriter.writeBytes(block[index+i] + '\n');
 		}
 	}
 		
-	private static Integer[] getLabelIndexes(String[] block, int docIndex) {
-		int lf = getLabelFreq(block, docIndex);
-		Integer[] arr = new Integer[lf];
-		for(int i=0; i<lf; i++) {
-			arr[i] = docIndex + 1 + 2*i;
+	private static ArrayList<Integer> getLabelIndexes(String[] block, int docIndex) {
+		ArrayList<Integer> labelIndexes = new ArrayList<Integer>();
+		int lf = getLF(block, docIndex);
+		int count = 0;
+		for(int i=docIndex; i<block.length; i++) {
+			if(count == lf) break;
+			if(block[i].charAt(0) == 'l') {
+				count += 1;
+				labelIndexes.add(i);
+			}
 		}
-		return arr;
+		return labelIndexes;
 	}
 	
-	private static Integer[] getDocIndexes(String[] block) {
-		int index = 1;
-		int df = getDocFreq(block);
-		Integer[] indexes = new Integer[df];
-		for(int i=0; i<df; i++) { 
-			indexes[i] = index;
-			index += getLabelFreq(block, index) * 2 + 1; 
+	private static ArrayList<Integer> getDocIndexes(String[] block) {
+		ArrayList<Integer> docIndexes = new ArrayList<Integer>();
+		for(int i=0; i<block.length; i++) {
+			String line = block[i];
+			if(line.charAt(0) == 'd') {
+				docIndexes.add(i);
+			}
 		}
-		return indexes;
+		return docIndexes;
 	}
 	
 	private static int getLabelid(String[] block, int index) {
@@ -187,11 +221,11 @@ public class IndexFileReaderWriter {
 		return Integer.parseInt(label.split(" ")[1]);
 	}
 	
-	private static int getLabelFreq(String[] block, int index) {
+	private static int getLF(String[] block, int index) {
 		return Integer.parseInt(block[index].split(" ")[3]);
 	}
 	
-	private static int getTermFreq(String[] block, int index) {
+	private static int getTF(String[] block, int index) {
 		return Integer.parseInt(block[index].split(" ")[2]);
 	}
 	
@@ -199,13 +233,11 @@ public class IndexFileReaderWriter {
 		return Integer.parseInt(block[index].split(" ")[1]);
 	}
 	
-	private static int getDocFreq(String[] block) {
-		if(block == null) return -1;
+	private static int getDF(String[] block) {
 		return Integer.parseInt(block[0].split(" ")[2]);
 	}
 	
-	private static String getBlockWord(String[] block) {
-		if(block == null) return null;
+	private static String getWord(String[] block) {
 		return block[0].split(" ")[1];
 	}
 	
@@ -224,5 +256,13 @@ public class IndexFileReaderWriter {
 		}
 		if (!blockIsRead && sb.length() == 0) { return null; }
 		return sb.toString().split("\n");
+	}
+	
+	private static void printBlock(String[] block) {
+		for(String str : block) print(str);
+	}
+	
+	private static void print(Object obj) {
+		System.out.println(obj);
 	}
 }

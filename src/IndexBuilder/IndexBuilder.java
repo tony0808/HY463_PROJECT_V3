@@ -3,25 +3,16 @@ package indexbuilder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-
 import mitos.stemmer.Stemmer;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-
 import java.util.LinkedList;
 import java.util.Queue;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class IndexBuilder {
 	
-	private final int MAX_BLOCK_SIZE = 74 * 1024; // KB
+	private final int MAX_BLOCK_SIZE = 250 * 1024; // KB
 	
 	Queue<String> partialFileQueue;
 	private int partialFileIndex;
@@ -66,10 +57,13 @@ public class IndexBuilder {
 			String partialFileOut = this.targetDirectory + "\\"  + this.partialFileIndex + ".txt";
 			String partialFileA = this.partialFileQueue.remove();
 			String partialFileB = this.partialFileQueue.remove();
+			print("merging : " + partialFileA + " with " + partialFileB);
 			IndexFileReaderWriter.mergeTwoPartialIndexes(partialFileA, partialFileB, partialFileOut);
 			this.partialFileQueue.add(partialFileOut);
 		}
+		deletePartialIndexFiles(this.partialFileQueue.remove());
 	}
+
 	
 	private void writePartialIndexToDisk() throws IOException {
 		this.partialFileIndex += 1;
@@ -77,6 +71,12 @@ public class IndexBuilder {
 		this.partialFileQueue.add(partialFilename);
 		IndexFileReaderWriter.writeIndexToDisk(partialFilename, this.block);
 		this.block = new TreeMap<String, PostingList>();
+	}
+	
+	private void deletePartialIndexFiles(String fileToKeep) throws IOException {
+		DirectoryScanner dirScanner = new DirectoryScanner();
+		dirScanner.setDirectoryPath(this.targetDirectory);
+		dirScanner.deleteFilesExceptOne(fileToKeep);
 	}
 	
 	private long getBlockSize() {

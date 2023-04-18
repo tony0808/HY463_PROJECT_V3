@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 public class Tester {
 	// 4577, 4532, 4262, 3641
 	public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
-		String corpusPath = "C:\\SmallCollection\\Topic_1\\0";
+		String corpusPath = "C:\\MiniCollection";
 		String targetDirectory = "C:\\CollectionIndex";
 		long ts = System.currentTimeMillis();
 		IndexBuilder ibuilder = new IndexBuilder(corpusPath, targetDirectory);
