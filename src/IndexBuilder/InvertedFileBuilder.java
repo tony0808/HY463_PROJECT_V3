@@ -13,6 +13,7 @@ import java.io.File;
 
 public class InvertedFileBuilder {
 	
+	protected static final String INVERTEDFILENAME = "InvertedFile.txt";
 	private final int MAX_BLOCK_SIZE = 250 * 1024; // KB
 	
 	Queue<String> partialFileQueue;
@@ -66,7 +67,7 @@ public class InvertedFileBuilder {
 		}
 		String mergedFilename = this.partialFileQueue.remove();
 		deletePartialIndexFiles(mergedFilename);
-		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\InvertedFile.txt");
+		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\" + INVERTEDFILENAME);
 	}
 
 	private void writePartialIndexToDisk() throws IOException {

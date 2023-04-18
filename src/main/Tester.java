@@ -3,6 +3,7 @@ package main;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import indexbuilder.IndexBuilder;
 import indexbuilder.InvertedFileBuilder;
 
 import java.util.ArrayList;
@@ -14,13 +15,14 @@ public class Tester {
 		String corpusPath = "C:\\MiniCollection";
 		String targetDirectory = "C:\\CollectionIndex";
 		String vocabularyName = "Vocabulary.txt";
-		long ts = System.currentTimeMillis();
-		InvertedFileBuilder ibuilder = new InvertedFileBuilder(corpusPath, targetDirectory);
-		ibuilder.buildInvertedFile();
-		long tf = System.currentTimeMillis();
-		double time = (tf - ts) / 1000.0;
-		System.out.println(time);
-
+//		long ts = System.currentTimeMillis();
+//		InvertedFileBuilder ibuilder = new InvertedFileBuilder(corpusPath, targetDirectory);
+//		ibuilder.buildInvertedFile();
+//		long tf = System.currentTimeMillis();
+//		double time = (tf - ts) / 1000.0;
+//		System.out.println(time);
+		IndexBuilder ibuilder = new IndexBuilder(corpusPath, targetDirectory);
+		ibuilder.buildVocabularyAndPostingFile();
 	}
 }
 
