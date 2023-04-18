@@ -241,7 +241,7 @@ public class InvertedFileReaderWriter {
 		return block[0].split(" ")[1];
 	}
 	
-	private static String[] getBlock(RandomAccessFile freader) throws IOException {
+	static String[] getBlock(RandomAccessFile freader) throws IOException {
 		String line;
 		StringBuilder sb = new StringBuilder();
 		boolean blockIsRead = false;
