@@ -20,12 +20,13 @@ public class Tokenizer {
 	private void tokenize() {
 		Pattern pattern = Pattern.compile(WORD_REGEX);
 		Matcher matcher = pattern.matcher(this.text);
+		int position;
 		while(matcher.find()) {
 			String word = matcher.group();
 			if(isWordStopword(word) || isSingleChar(word)) continue;
 			word = toLowerCase(word);
 			word = Stemmer.Stem(word);
-			int position = matcher.start();
+			position = matcher.start();
 			if(!this.wordPositionMap.containsKey(word)) {
 				ArrayList<Integer> positions = new ArrayList<Integer>();
 				this.wordPositionMap.put(word, positions); 
