@@ -61,8 +61,7 @@ public class IndexFileReaderWriter {
 		}
 	}
 	
-	
-	public static int mergeTwoBlocks(String[] blockA, String[] blockB, RandomAccessFile fwriter) throws IOException {
+	private static int mergeTwoBlocks(String[] blockA, String[] blockB, RandomAccessFile fwriter) throws IOException {
 		String wordA = getBlockWord(blockA);
 		String wordB = getBlockWord(blockB);
 		if(wordA.compareTo(wordB) < 0) {
@@ -83,11 +82,11 @@ public class IndexFileReaderWriter {
 		}
 	}
 	
-	public static void writeBlockToDisk(String[] block, RandomAccessFile fwriter) throws IOException {
+	private static void writeBlockToDisk(String[] block, RandomAccessFile fwriter) throws IOException {
 		for(String str : block) fwriter.writeBytes(str + '\n');
 	}
 	
-	public static void mergeDocumentLists(String[] blockA, String[] blockB, RandomAccessFile fwriter) throws IOException {
+	private static void mergeDocumentLists(String[] blockA, String[] blockB, RandomAccessFile fwriter) throws IOException {
 		Integer[] docListA = getDocIndexes(blockA);
 		Integer[] docListB = getDocIndexes(blockB);	
 		int i = 0;
@@ -122,7 +121,7 @@ public class IndexFileReaderWriter {
 		}
 	}
 	
-	public static void mergeLabelsList(String[] blockA, int docIndexA, String blockB[], int docIndexB, RandomAccessFile fwriter) throws IOException {
+	private static void mergeLabelsList(String[] blockA, int docIndexA, String blockB[], int docIndexB, RandomAccessFile fwriter) throws IOException {
 		Integer[] labelListA = getLabelIndexes(blockA, docIndexA);
 		Integer[] labelListB = getLabelIndexes(blockB, docIndexB);
 		int i=0;
@@ -151,20 +150,19 @@ public class IndexFileReaderWriter {
 		}
 	}
 	
-	public static void writeLabelEntryToDisk(String[] block, int index, RandomAccessFile fwriter) throws IOException {
+	private static void writeLabelEntryToDisk(String[] block, int index, RandomAccessFile fwriter) throws IOException {
 		fwriter.writeBytes(block[index] + '\n');
 		fwriter.writeBytes(block[index+1] + '\n');
 	}
 	
-	public static void writeDocumentEntryToDisk(String[] block, int index, int lf, RandomAccessFile fwriter) throws IOException {
+	private static void writeDocumentEntryToDisk(String[] block, int index, int lf, RandomAccessFile fwriter) throws IOException {
 		fwriter.writeBytes(block[index] + '\n');
 		for(int i=1; i<=lf*2; i++) {
 			fwriter.writeBytes(block[index+i] + '\n');
 		}
 	}
-	
-	
-	public static Integer[] getLabelIndexes(String[] block, int docIndex) {
+		
+	private static Integer[] getLabelIndexes(String[] block, int docIndex) {
 		int lf = getLabelFreq(block, docIndex);
 		Integer[] arr = new Integer[lf];
 		for(int i=0; i<lf; i++) {
@@ -173,7 +171,7 @@ public class IndexFileReaderWriter {
 		return arr;
 	}
 	
-	public static Integer[] getDocIndexes(String[] block) {
+	private static Integer[] getDocIndexes(String[] block) {
 		int index = 1;
 		int df = getDocFreq(block);
 		Integer[] indexes = new Integer[df];
@@ -184,34 +182,34 @@ public class IndexFileReaderWriter {
 		return indexes;
 	}
 	
-	public static int getLabelid(String[] block, int index) {
+	private static int getLabelid(String[] block, int index) {
 		String label = block[index];
 		return Integer.parseInt(label.split(" ")[1]);
 	}
 	
-	public static int getLabelFreq(String[] block, int index) {
+	private static int getLabelFreq(String[] block, int index) {
 		return Integer.parseInt(block[index].split(" ")[3]);
 	}
 	
-	public static int getTermFreq(String[] block, int index) {
+	private static int getTermFreq(String[] block, int index) {
 		return Integer.parseInt(block[index].split(" ")[2]);
 	}
 	
-	public static int getDocId(String[] block, int index) {
+	private static int getDocId(String[] block, int index) {
 		return Integer.parseInt(block[index].split(" ")[1]);
 	}
 	
-	public static int getDocFreq(String[] block) {
+	private static int getDocFreq(String[] block) {
 		if(block == null) return -1;
 		return Integer.parseInt(block[0].split(" ")[2]);
 	}
 	
-	public static String getBlockWord(String[] block) {
+	private static String getBlockWord(String[] block) {
 		if(block == null) return null;
 		return block[0].split(" ")[1];
 	}
 	
-	public static String[] getBlock(RandomAccessFile freader) throws IOException {
+	private static String[] getBlock(RandomAccessFile freader) throws IOException {
 		String line;
 		StringBuilder sb = new StringBuilder();
 		boolean blockIsRead = false;

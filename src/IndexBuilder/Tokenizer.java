@@ -15,6 +15,7 @@ public class Tokenizer {
 	private HashMap<String, ArrayList<Integer>> wordPositionMap;
 	
 	public Tokenizer(String text) {  this.text = text; this.wordPositionMap = new HashMap<>(); tokenize(); }
+	
 	public HashMap<String, ArrayList<Integer>> get_tokens() { return this.wordPositionMap; }
  	
 	private void tokenize() {

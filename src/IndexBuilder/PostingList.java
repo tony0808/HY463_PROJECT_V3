@@ -11,6 +11,7 @@ public class PostingList {
 	public PostingList() { this.postingList = new HashMap<>(); }
 	
 	public HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> getPostingList() { return this.postingList; }
+	
 	public boolean hasPositionsList(int docId) { return this.postingList.containsKey(docId); }
 	
 	public void addNewPostingList(int docId, int labelId, ArrayList<Integer> positions) {

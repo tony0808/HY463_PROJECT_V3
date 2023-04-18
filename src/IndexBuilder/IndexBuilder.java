@@ -15,10 +15,13 @@ import java.util.ArrayList;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class IndexBuilder {
 	
-	private final int MAX_BLOCK_SIZE = 150 * 1024; // KB
+	private final int MAX_BLOCK_SIZE = 74 * 1024; // KB
 	
 	Queue<String> partialFileQueue;
 	private int partialFileIndex;
@@ -54,7 +57,18 @@ public class IndexBuilder {
 			}
 		}
 		writePartialIndexToDisk();
-		// mergePartialIndexes();
+		mergePartialIndexes();
+	}
+	
+	private void mergePartialIndexes() throws IOException {
+		while(this.partialFileQueue.size() > 1) {
+			this.partialFileIndex += 1;
+			String partialFileOut = this.targetDirectory + "\\"  + this.partialFileIndex + ".txt";
+			String partialFileA = this.partialFileQueue.remove();
+			String partialFileB = this.partialFileQueue.remove();
+			IndexFileReaderWriter.mergeTwoPartialIndexes(partialFileA, partialFileB, partialFileOut);
+			this.partialFileQueue.add(partialFileOut);
+		}
 	}
 	
 	private void writePartialIndexToDisk() throws IOException {
