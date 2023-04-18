@@ -9,8 +9,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.io.File;
 
-public class IndexBuilder {
+public class InvertedFileBuilder {
 	
 	private final int MAX_BLOCK_SIZE = 250 * 1024; // KB
 	
@@ -21,14 +22,17 @@ public class IndexBuilder {
 	private HashMap<Integer, String> labels;
 	private TreeMap<String, PostingList> block;
 	
-	public IndexBuilder(String documentsDirectory, String targetDirectory) {
+	public InvertedFileBuilder(String documentsDirectory, String targetDirectory) {
 		initClassData(targetDirectory);
 		initDocumentIdMap((new DirectoryScanner(documentsDirectory)).get_document_paths());
 		initLabelIdMap();
 		Stemmer.Initialize();
 	}
 	
-	public void createIndex() throws UnsupportedEncodingException, IOException {
+	public HashMap<Integer, String> getDocIdToNameMap() { return this.documents; }
+	public HashMap<Integer, String> getLabelIdToNameMap() { return this.labels; }
+	
+	public void buildInvertedFile() throws UnsupportedEncodingException, IOException {
 		for(int docid = 1; docid <= this.documents.size(); docid++) {
 			for(int labelid = 1; labelid <= this.labels.size(); labelid++) {
 				Tokenizer tokenizer = new Tokenizer((new XmlLabelReader(documents.get(docid))).getLabelText(this.labels.get(labelid)));
@@ -57,19 +61,19 @@ public class IndexBuilder {
 			String partialFileOut = this.targetDirectory + "\\"  + this.partialFileIndex + ".txt";
 			String partialFileA = this.partialFileQueue.remove();
 			String partialFileB = this.partialFileQueue.remove();
-			print("merging : " + partialFileA + " with " + partialFileB);
-			IndexFileReaderWriter.mergeTwoPartialIndexes(partialFileA, partialFileB, partialFileOut);
+			InvertedFileReaderWriter.mergeTwoPartialIndexes(partialFileA, partialFileB, partialFileOut);
 			this.partialFileQueue.add(partialFileOut);
 		}
-		deletePartialIndexFiles(this.partialFileQueue.remove());
+		String mergedFilename = this.partialFileQueue.remove();
+		deletePartialIndexFiles(mergedFilename);
+		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\InvertedFile.txt");
 	}
 
-	
 	private void writePartialIndexToDisk() throws IOException {
 		this.partialFileIndex += 1;
 		String partialFilename = this.targetDirectory + "\\" + this.partialFileIndex + ".txt";
 		this.partialFileQueue.add(partialFilename);
-		IndexFileReaderWriter.writeIndexToDisk(partialFilename, this.block);
+		InvertedFileReaderWriter.writeIndexToDisk(partialFilename, this.block);
 		this.block = new TreeMap<String, PostingList>();
 	}
 	
@@ -77,6 +81,12 @@ public class IndexBuilder {
 		DirectoryScanner dirScanner = new DirectoryScanner();
 		dirScanner.setDirectoryPath(this.targetDirectory);
 		dirScanner.deleteFilesExceptOne(fileToKeep);
+	}
+	
+	private void renameFinalMergedFile(String oldFileName, String newFileName) {
+		File oldFile = new File(oldFileName);
+		File newFile = new File(newFileName);
+		oldFile.renameTo(newFile);
 	}
 	
 	private long getBlockSize() {

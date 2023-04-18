@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class IndexFileReaderWriter {
+public class InvertedFileReaderWriter {
 	
 	public static void writeIndexToDisk(String filename, TreeMap<String, PostingList> block) throws IOException {
 		FileWriter fwriter = new FileWriter(new File(filename));
@@ -256,13 +256,5 @@ public class IndexFileReaderWriter {
 		}
 		if (!blockIsRead && sb.length() == 0) { return null; }
 		return sb.toString().split("\n");
-	}
-	
-	private static void printBlock(String[] block) {
-		for(String str : block) print(str);
-	}
-	
-	private static void print(Object obj) {
-		System.out.println(obj);
 	}
 }

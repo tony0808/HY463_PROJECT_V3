@@ -5,8 +5,8 @@ import java.io.IOException;
 import indexbuilder.DirectoryScanner;
 import java.io.RandomAccessFile;
 
-import indexbuilder.IndexBuilder;
-import indexbuilder.IndexFileReaderWriter;
+import indexbuilder.InvertedFileBuilder;
+import indexbuilder.InvertedFileReaderWriter;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
