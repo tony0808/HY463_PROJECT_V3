@@ -1,6 +1,5 @@
 package queryevaluator;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -24,10 +23,17 @@ public class PostingFileScanner {
 	public void setDF(int df) { this.df = df; }
 	public void setDPTR(int dptr) { this.dptr = dptr; }
 	
-	public void printDocumentBlock() {
-		for(String str : this.relevantDocumentsBlock) {
-			System.out.println(str);
+	public Integer[] getRelevantDocumentIds() {
+		StringBuilder sb = new StringBuilder();
+		for(String line : this.relevantDocumentsBlock) {
+			if(line.charAt(0) == 'd') {
+				sb.append(line.split(" ")[1]).append(",");
+			}
 		}
+		String[] docIdsStr = sb.toString().split(",");
+		Integer[] docIdsInt = new Integer[docIdsStr.length];
+		for(int i=0; i<docIdsStr.length; i++) { docIdsInt[i] = Integer.parseInt(docIdsStr[i]); }
+		return docIdsInt;
 	}
 	
 	public void initRelevantDocumentsBlock() throws IOException {
@@ -43,6 +49,12 @@ public class PostingFileScanner {
 		}
 		this.relevantDocumentsBlock = sb.toString().split("\n");
 		freader.close();
+	}
+	
+	public void printDocumentBlock() {
+		for(String str : this.relevantDocumentsBlock) {
+			System.out.println(str);
+		}
 	}
 }
 
