@@ -37,7 +37,7 @@ public class IndexBuilder {
 	}
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
-		//invertedBuilder.buildInvertedFile();
+		invertedBuilder.buildInvertedFile();
 		buildVocabularyAndPostingFile();
 		buildDocumentsFile();
 		buildLabelsFile();

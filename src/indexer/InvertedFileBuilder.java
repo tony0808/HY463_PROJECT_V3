@@ -14,7 +14,7 @@ import java.io.File;
 public class InvertedFileBuilder {
 	
 	protected static final String INVERTEDFILENAME = "InvertedFile.txt";
-	private final int MAX_BLOCK_SIZE = 250 * 1024; // KB
+	private final int MAX_BLOCK_SIZE = 200 * 1024; // KB
 	
 	Queue<String> partialFileQueue;
 	private int partialFileIndex;
