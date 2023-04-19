@@ -1,39 +1,60 @@
 package indexbuilder;
 
-import java.io.FileNotFoundException;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.Map;
 
 public class IndexBuilder {
 	
 	private static final String VOCABULARYNAME = "Vocabulary.txt";
 	private static final String DOCUMENTSNAME = "Documents.txt";
+	private static final String LABELSNAME = "Labels.txt";
 	private static final String POSTINGLISTNAME = "PostingList.txt";
 	
 	private String targetDirectory;
 	private String corpusDirectory;
-	private InvertedFileBuilder invBuilder;
+	private InvertedFileBuilder invertedBuilder;
 	
 	public IndexBuilder(String corpusDirectory, String targetDirectory) {
 		this.corpusDirectory = corpusDirectory;
 		this.targetDirectory = targetDirectory;
-		this.invBuilder = new InvertedFileBuilder(this.corpusDirectory, this.targetDirectory);
+		this.invertedBuilder = new InvertedFileBuilder(this.corpusDirectory, this.targetDirectory);
 	}
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
-		// this.invBuilder.buildInvertedFile();
-		// buildVocabularyAndPostingFile();
-		buildDocumentsFile(this.invBuilder.getDocIdToNameMap());
+		invertedBuilder.buildInvertedFile();
+		buildVocabularyAndPostingFile();
+		buildDocumentsFile();
+		buildLabelsFile();
 	}
 	
-	
-	public void buildDocumentsFile(HashMap<Integer, String> docIdToNameMap) {
-		// good
+	public void buildLabelsFile() throws IOException {
+		HashMap<Integer, String> labelNamesMap = this.invertedBuilder.getLabelIdToNameMap();
+		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + LABELSNAME));
+		for(Map.Entry<Integer, String> entry : labelNamesMap.entrySet()) {
+			int labelid = entry.getKey();
+			String labelName = entry.getValue();
+			fwriter.write(labelid + " " + labelName + "\n");
+		}
+		fwriter.close();
 	}
 	
-	public void buildVocabularyAndPostingFile() throws IOException {
+	public void buildDocumentsFile() throws IOException {
+		HashMap<Integer, String> documentNamesMap = this.invertedBuilder.getDocIdToNameMap();
+		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + DOCUMENTSNAME));
+		for(Map.Entry<Integer, String> entry : documentNamesMap.entrySet()) {
+			int docid = entry.getKey();
+			String docName = entry.getValue();
+			fwriter.write(docid + " " + docName + "\n");
+		}
+		fwriter.close();
+	}
+	
+	private void buildVocabularyAndPostingFile() throws IOException {
 		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
 		RandomAccessFile vocabWriter = new RandomAccessFile(this.targetDirectory + "\\" + VOCABULARYNAME, "rw");
 		RandomAccessFile postingWriter = new RandomAccessFile(this.targetDirectory + "\\" + POSTINGLISTNAME, "rw");
