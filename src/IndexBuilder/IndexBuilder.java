@@ -30,7 +30,7 @@ public class IndexBuilder {
 	
 	
 	public void buildDocumentsFile(HashMap<Integer, String> docIdToNameMap) {
-		
+		// good
 	}
 	
 	public void buildVocabularyAndPostingFile() throws IOException {
