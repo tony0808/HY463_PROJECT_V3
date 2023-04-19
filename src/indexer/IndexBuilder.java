@@ -1,38 +1,49 @@
-package indexbuilder;
+package indexer;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class IndexBuilder {
 	
 	private static final String VOCABULARYNAME = "Vocabulary.txt";
 	private static final String DOCUMENTSNAME = "Documents.txt";
 	private static final String LABELSNAME = "Labels.txt";
-	private static final String POSTINGLISTNAME = "PostingList.txt";
+	private static final String POSTINGFILENAME = "PostingFile.txt";
+	
+	private HashMap<Integer, ArrayList<Integer>> documentVectorMap;
+	private HashMap<Integer, Double> documentNormMap;
 	
 	private String targetDirectory;
 	private String corpusDirectory;
 	private InvertedFileBuilder invertedBuilder;
 	
+	public String getVocabularyName() { return VOCABULARYNAME; }
+	public String getDocumentsFileName() { return DOCUMENTSNAME; }
+	public String getLabelsFileName() { return LABELSNAME; }
+	public String getPostingFileName() { return POSTINGFILENAME; }
 	public IndexBuilder(String corpusDirectory, String targetDirectory) {
+		this.documentNormMap = new HashMap<>();
+		this.documentVectorMap = new HashMap<>();
 		this.corpusDirectory = corpusDirectory;
 		this.targetDirectory = targetDirectory;
 		this.invertedBuilder = new InvertedFileBuilder(this.corpusDirectory, this.targetDirectory);
 	}
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
-		invertedBuilder.buildInvertedFile();
-		buildVocabularyAndPostingFile();
+		//invertedBuilder.buildInvertedFile();
+		//buildVocabularyAndPostingFile();
 		buildDocumentsFile();
-		buildLabelsFile();
+		//buildLabelsFile();
 	}
 	
-	public void buildLabelsFile() throws IOException {
+	private void buildLabelsFile() throws IOException {
 		HashMap<Integer, String> labelNamesMap = this.invertedBuilder.getLabelIdToNameMap();
 		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + LABELSNAME));
 		for(Map.Entry<Integer, String> entry : labelNamesMap.entrySet()) {
@@ -43,13 +54,15 @@ public class IndexBuilder {
 		fwriter.close();
 	}
 	
-	public void buildDocumentsFile() throws IOException {
+	private void buildDocumentsFile() throws IOException {
+		buildDocumentNormMap();
 		HashMap<Integer, String> documentNamesMap = this.invertedBuilder.getDocIdToNameMap();
 		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + DOCUMENTSNAME));
 		for(Map.Entry<Integer, String> entry : documentNamesMap.entrySet()) {
 			int docid = entry.getKey();
 			String docName = entry.getValue();
-			fwriter.write(docid + " " + docName + "\n");
+			Double docNorm = this.documentNormMap.get(docid);
+			fwriter.write(docid + " " + docName + " " + docNorm + "\n");
 		}
 		fwriter.close();
 	}
@@ -57,7 +70,7 @@ public class IndexBuilder {
 	private void buildVocabularyAndPostingFile() throws IOException {
 		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
 		RandomAccessFile vocabWriter = new RandomAccessFile(this.targetDirectory + "\\" + VOCABULARYNAME, "rw");
-		RandomAccessFile postingWriter = new RandomAccessFile(this.targetDirectory + "\\" + POSTINGLISTNAME, "rw");
+		RandomAccessFile postingWriter = new RandomAccessFile(this.targetDirectory + "\\" + POSTINGFILENAME, "rw");
 
 		StringBuilder sb = new StringBuilder();
 		long docPointer = 1;
@@ -77,6 +90,44 @@ public class IndexBuilder {
 		freader.close();
 		vocabWriter.close();
 		postingWriter.close();
+	}
+	
+	private void buildDocumentNormMap() throws IOException {
+		initDocumentNormMap();
+		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
+		String[] block;
+		while((block = InvertedFileReaderWriter.getBlock(freader)) != null) {
+			for(String line : block) {
+				if(line.charAt(0) == 'd') {
+					int docid = Integer.parseInt(line.split(" ")[1]);
+					int tf = Integer.parseInt(line.split(" ")[2]);
+					ArrayList<Integer> docVector = this.documentVectorMap.get(docid);
+					docVector.add(tf);
+				}
+			}
+		}
+		calculateDocumentNorms();
+	}
+	
+	private void calculateDocumentNorms() {
+		for(Map.Entry<Integer, ArrayList<Integer>> docVectorEntry : this.documentVectorMap.entrySet()) {
+			int docid = docVectorEntry.getKey();
+			ArrayList<Integer> docVector = docVectorEntry.getValue();
+			double norm = 0.0;
+			for(int tf : docVector) {
+				norm += tf * tf;
+			}
+			norm = Math.sqrt(norm);
+			norm = Math.round(norm * Math.pow(10, 3));
+			this.documentNormMap.put(docid, norm);
+		}
+	}
+	
+	private void initDocumentNormMap() {
+		Set<Integer> docIdsSet = this.invertedBuilder.getDocIdToNameMap().keySet();
+		for(Integer docid : docIdsSet) {
+			this.documentVectorMap.put(docid, new ArrayList<Integer>());
+		}
 	}
 }
 

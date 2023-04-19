@@ -1,4 +1,4 @@
-package indexbuilder;
+package indexer;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

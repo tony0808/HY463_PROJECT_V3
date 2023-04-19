@@ -1,4 +1,4 @@
-package indexbuilder;
+package indexer;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package indexbuilder;
+package indexer;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,9 +10,7 @@ public class DirectoryScanner {
 	private ArrayList<String> documentPaths;
 	private String directoryPath;
 	
-	public DirectoryScanner() {
-		
-	}
+	public DirectoryScanner() {}
 	
 	public DirectoryScanner(String directoryPath) { 
 		this.documentPaths = new ArrayList<String>(); 
@@ -20,15 +18,11 @@ public class DirectoryScanner {
 		init_documentPaths_recursive(new File(this.directoryPath));
 	}
 	
-	public void setDirectoryPath(String directoryPath) {
-		this.directoryPath = directoryPath;
-	}
-	
+	public void setDirectoryPath(String directoryPath) { this.directoryPath = directoryPath; }
 	public ArrayList<String> get_document_paths() { return this.documentPaths; }
 	
 	public void deleteFilesExceptOne(String fileToKeep) throws IOException {
 		File directory = new File(this.directoryPath);
-		
 		if(directory.isDirectory()) {
 			File[] files = directory.listFiles();
 			for(File file : files) {
@@ -46,13 +40,3 @@ public class DirectoryScanner {
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
