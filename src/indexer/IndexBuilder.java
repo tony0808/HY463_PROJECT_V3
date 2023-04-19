@@ -12,10 +12,10 @@ import java.util.Set;
 
 public class IndexBuilder {
 	
-	private static final String VOCABULARYNAME = "Vocabulary.txt";
-	private static final String DOCUMENTSNAME = "Documents.txt";
-	private static final String LABELSNAME = "Labels.txt";
-	private static final String POSTINGFILENAME = "PostingFile.txt";
+	public static final String VOCABULARYNAME = "Vocabulary.txt";
+	public static final String DOCUMENTSNAME = "Documents.txt";
+	public static final String LABELSNAME = "Labels.txt";
+	public static final String POSTINGFILENAME = "PostingFile.txt";
 	
 	private HashMap<Integer, ArrayList<Integer>> documentVectorMap;
 	private HashMap<Integer, Double> documentNormMap;
@@ -38,9 +38,9 @@ public class IndexBuilder {
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
 		//invertedBuilder.buildInvertedFile();
-		//buildVocabularyAndPostingFile();
+		buildVocabularyAndPostingFile();
 		buildDocumentsFile();
-		//buildLabelsFile();
+		buildLabelsFile();
 	}
 	
 	private void buildLabelsFile() throws IOException {
@@ -73,7 +73,7 @@ public class IndexBuilder {
 		RandomAccessFile postingWriter = new RandomAccessFile(this.targetDirectory + "\\" + POSTINGFILENAME, "rw");
 
 		StringBuilder sb = new StringBuilder();
-		long docPointer = 1;
+		long docPointer = 0;
 		String[] block;
 		while((block = InvertedFileReaderWriter.getBlock(freader)) != null) {
 			String wordLine = block[0];
@@ -85,11 +85,19 @@ public class IndexBuilder {
 				postingWriter.writeBytes(block[i] + '\n');
 			}
 			sb.setLength(0);
-			docPointer += block.length - 1;
+			docPointer += (block.length - 1) + getTotalBlockSize(block);
 		}
 		freader.close();
 		vocabWriter.close();
 		postingWriter.close();
+	}
+	
+	private int getTotalBlockSize(String[] block) {
+		int size = 0;
+		for(int i=1; i<block.length; i++) {
+			size += block[i].length();
+		}
+		return size;
 	}
 	
 	private void buildDocumentNormMap() throws IOException {
