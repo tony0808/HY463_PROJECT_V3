@@ -1,6 +1,5 @@
 package indexer;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.io.IOException;
@@ -16,7 +15,7 @@ import java.io.File;
 public class InvertedFileBuilder {
 	
 	protected static final String INVERTEDFILENAME = "InvertedFile.txt";
-	private final int MAX_BLOCK_SIZE = 200 * 1024; // KB
+	private final long MAX_BLOCK_SIZE = 200L * 1024L * 1024L; 
 	
 	Queue<String> partialFileQueue;
 	private int partialFileIndex;
@@ -24,6 +23,7 @@ public class InvertedFileBuilder {
 	private TreeMap<Integer, String> documents;
 	private TreeMap<Integer, String> labels;
 	private TreeMap<String, PostingList> block;
+	private long currentBlockSize;
 	
 	public InvertedFileBuilder(String documentsDirectory, String targetDirectory) {
 		initClassData(targetDirectory);
@@ -50,7 +50,8 @@ public class InvertedFileBuilder {
 						postingList.addPositionsList(docid, labelid, token.getValue());
 					}
 					this.block.put(token.getKey(), postingList);
-					if(getBlockSize() > MAX_BLOCK_SIZE) { writePartialIndexToDisk(); }
+					this.currentBlockSize += token.getKey().length() + postingList.getSize();
+					if(this.currentBlockSize > MAX_BLOCK_SIZE) { writePartialIndexToDisk(); }
 				}
 			}
 		}
@@ -64,6 +65,7 @@ public class InvertedFileBuilder {
 		this.partialFileQueue.add(partialFilename);
 		InvertedFileReaderWriter.writeIndexToDisk(partialFilename, this.block);
 		this.block = new TreeMap<String, PostingList>();
+		this.currentBlockSize = 0;
 	}
 	
 	private void mergePartialIndexes() throws IOException {
@@ -76,7 +78,6 @@ public class InvertedFileBuilder {
 			this.partialFileQueue.add(partialFileOut);
 		}
 		String mergedFilename = this.partialFileQueue.remove();
-		System.out.println(mergedFilename);
 		deletePartialIndexFiles(mergedFilename);
 		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\" + INVERTEDFILENAME);
 	}
@@ -126,15 +127,6 @@ public class InvertedFileBuilder {
 		oldFile.renameTo(newFile);
 	}
 	
-	private long getBlockSize() {
-		long size = 0L;
-		for(String word : this.block.keySet()) {
-			size += word.length();
-			size += this.block.get(word).getSize();
-		}
-		return size;
-	}
-	
 	private void initDocumentIdMap(ArrayList<String> documents) {
 		int docid = 1;
 		this.documents = new TreeMap<>();
@@ -152,5 +144,6 @@ public class InvertedFileBuilder {
 		this.partialFileIndex = 0;
 		this.targetDirectory = targetDirectory;
 		this.block = new TreeMap<>();
+		this.currentBlockSize = 0L;
 	}
 }

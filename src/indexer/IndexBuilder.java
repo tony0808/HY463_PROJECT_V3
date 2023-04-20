@@ -8,7 +8,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class IndexBuilder {
@@ -33,10 +32,10 @@ public class IndexBuilder {
 	}
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
-		//invertedBuilder.buildInvertedFile();
+		invertedBuilder.buildInvertedFile();
 		buildVocabularyAndPostingFile();
-//		buildDocumentsFile();
-//		buildLabelsFile();
+		buildDocumentsFile();
+		buildLabelsFile();
 	}
 	
 	private void buildVocabularyAndPostingFile() throws IOException {
@@ -65,15 +64,34 @@ public class IndexBuilder {
 	private void buildDocumentsFile() throws IOException {
 		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
 		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + DOCUMENTSNAME));
-		HashMap<Integer, ArrayList<Integer>> documentVectorMap = buildDocumentVectorMap(freader);
 		TreeMap<Integer, String> documents = this.invertedBuilder.getDocIdToNameMap();
+		HashMap<Integer, ArrayList<Integer>> docVectorMap = buildDocumentVectorMap(freader);
+		HashMap<Integer, Double> documentNormMap = buildDocumentNormMap(docVectorMap);
 		for(Map.Entry<Integer, String> documentEntry : documents.entrySet()) {
 			int docid = documentEntry.getKey();
 			String documentName = documentEntry.getValue();
-			// double norm = calculateDocumentNorm(freader, docid);
+			double norm = documentNormMap.get(docid);
+			fwriter.write(docid + " " + documentName + " " + norm + "\n");
 		}
 		fwriter.close();
 		freader.close();
+	}
+	
+	private HashMap<Integer, Double> buildDocumentNormMap(HashMap<Integer, ArrayList<Integer>> documentVectorMap) {
+		HashMap<Integer, Double> documentNormMap = new HashMap<>();
+		ArrayList<Integer> docVector;
+		int docid;
+		double norm;
+		for(Map.Entry<Integer, ArrayList<Integer>> entry : documentVectorMap.entrySet()) {
+			docid = entry.getKey();
+			docVector = entry.getValue();
+			norm = 0.0;
+			for(int n : docVector) {
+				norm += n * n;
+			}
+			documentNormMap.put(docid, Math.sqrt(norm));
+		}
+		return documentNormMap;
 	}
 	
 	private HashMap<Integer, ArrayList<Integer>> buildDocumentVectorMap(RandomAccessFile freader) throws IOException {
@@ -90,7 +108,8 @@ public class IndexBuilder {
 				if(docVector == null) {
 					docVector = new ArrayList<Integer>();
 				}
-				docVector.add(InvertedFileReaderWriter.getTFfromDocumentEntry(block[i]));
+				docVector.add(InvertedFileReaderWriter.getTFfromDocumentEntry(block[i+1]));
+				documentVectorMap.put(docid, docVector);
 			}
 		}
 		return documentVectorMap;
