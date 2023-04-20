@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class IndexBuilder {
 	
@@ -16,9 +17,6 @@ public class IndexBuilder {
 	public static final String DOCUMENTSNAME = "Documents.txt";
 	public static final String LABELSNAME = "Labels.txt";
 	public static final String POSTINGFILENAME = "PostingFile.txt";
-	
-	private HashMap<Integer, ArrayList<Integer>> documentVectorMap;
-	private HashMap<Integer, Double> documentNormMap;
 	
 	private String targetDirectory;
 	private String corpusDirectory;
@@ -29,22 +27,77 @@ public class IndexBuilder {
 	public String getLabelsFileName() { return LABELSNAME; }
 	public String getPostingFileName() { return POSTINGFILENAME; }
 	public IndexBuilder(String corpusDirectory, String targetDirectory) {
-		this.documentNormMap = new HashMap<>();
-		this.documentVectorMap = new HashMap<>();
 		this.corpusDirectory = corpusDirectory;
 		this.targetDirectory = targetDirectory;
 		this.invertedBuilder = new InvertedFileBuilder(this.corpusDirectory, this.targetDirectory);
 	}
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
-		invertedBuilder.buildInvertedFile();
-//		buildVocabularyAndPostingFile();
+		//invertedBuilder.buildInvertedFile();
+		buildVocabularyAndPostingFile();
 //		buildDocumentsFile();
 //		buildLabelsFile();
 	}
 	
+	private void buildVocabularyAndPostingFile() throws IOException {
+		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
+		RandomAccessFile vocabWriter = new RandomAccessFile(this.targetDirectory + "\\" + VOCABULARYNAME, "rw");
+		RandomAccessFile postingWriter = new RandomAccessFile(this.targetDirectory + "\\" + POSTINGFILENAME, "rw");
+		
+		StringBuilder sb = new StringBuilder();
+		long docPointer = 0;
+		String[] block;
+		while((block = InvertedFileReaderWriter.getWordBlock(freader)) != null) {
+			String wordLine = block[0];
+			sb.append(wordLine).append(" ").append(docPointer).append("\n");
+			vocabWriter.writeBytes(sb.toString());
+			for(int i=1; i<block.length; i++) {
+				postingWriter.writeBytes(block[i] + "\n");
+			}
+			sb.setLength(0);
+			docPointer += (block.length - 1) + getTotalBlockSize(block);
+		}
+		freader.close();
+		vocabWriter.close();
+		postingWriter.close();
+	}
+	
+	private void buildDocumentsFile() throws IOException {
+		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
+		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + DOCUMENTSNAME));
+		HashMap<Integer, ArrayList<Integer>> documentVectorMap = buildDocumentVectorMap(freader);
+		TreeMap<Integer, String> documents = this.invertedBuilder.getDocIdToNameMap();
+		for(Map.Entry<Integer, String> documentEntry : documents.entrySet()) {
+			int docid = documentEntry.getKey();
+			String documentName = documentEntry.getValue();
+			// double norm = calculateDocumentNorm(freader, docid);
+		}
+		fwriter.close();
+		freader.close();
+	}
+	
+	private HashMap<Integer, ArrayList<Integer>> buildDocumentVectorMap(RandomAccessFile freader) throws IOException {
+		HashMap<Integer, ArrayList<Integer>> documentVectorMap = new HashMap<>();
+		ArrayList<Integer> docVector;
+		String[] block;
+		int[] docIds;
+		int docid;
+		while((block = InvertedFileReaderWriter.getWordBlock(freader)) != null) {
+			docIds = InvertedFileReaderWriter.getDocIDList(block);
+			for(int i=0; i<docIds.length; i++) {
+				docid = docIds[i];
+				docVector = documentVectorMap.get(docid);
+				if(docVector == null) {
+					docVector = new ArrayList<Integer>();
+				}
+				docVector.add(InvertedFileReaderWriter.getTFfromDocumentEntry(block[i]));
+			}
+		}
+		return documentVectorMap;
+	}
+	
 	private void buildLabelsFile() throws IOException {
-		HashMap<Integer, String> labelNamesMap = this.invertedBuilder.getLabelIdToNameMap();
+		TreeMap<Integer, String> labelNamesMap = this.invertedBuilder.getLabelIdToNameMap();
 		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + LABELSNAME));
 		for(Map.Entry<Integer, String> entry : labelNamesMap.entrySet()) {
 			int labelid = entry.getKey();

@@ -1,24 +1,60 @@
 package indexer;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Tester {
 	
 	public static void main(String[] args) throws NumberFormatException, IOException {
-		String targetDirectory = "C:\\CollectionIndex";
-		String coprusDirectory = "C:\\MiniCollection";
-		IndexBuilder ibuilder = new IndexBuilder(coprusDirectory, targetDirectory);
-		ibuilder.buildIndex();
-//		String fileA = "C:\\CollectionIndex\\testA.txt";
+//		String targetDirectory = "C:\\CollectionIndex";
+//		String coprusDirectory = "C:\\MiniCollection";
+//		IndexBuilder ibuilder = new IndexBuilder(coprusDirectory, targetDirectory);
+//		ibuilder.buildIndex();
+		String fileA = "C:\\CollectionIndex\\testA.txt";
 //		String fileB = "C:\\CollectionIndex\\testB.txt";
 //		String fileC = "C:\\CollectionIndex\\testOut.txt";
 //		InvertedFileReaderWriter.mergeTwoPartialIndexes(fileA, fileB, fileC);
-	
-//		String[] block = parseDocEntry("1 1 3 l 4 p [1, 2, 3, 4, 5] l 4 p [1, 2, 3, 4, 5] l 4 p [1, 2, 3, 4, 5] l 4 p [1, 2, 3, 4, 5] l 5 p[1, 123123] l 612312 p[1]");
-//		int[] arr = getLabelIDList(block);
-//		printBlock(block);
-//		for(int i : arr) print(i);
+		RandomAccessFile freader = new RandomAccessFile(fileA, "r");
+		HashMap<Integer, ArrayList<Integer>> testVec = buildDocumentVectorMap(freader);
+		print(testVec);
+		printMap(testVec);
 	}
+	
+	public static void printMap(HashMap<Integer, ArrayList<Integer>> map) {
+		for(Map.Entry<Integer, ArrayList<Integer>> entry : map.entrySet()) {
+			int docid = entry.getKey();
+			ArrayList<Integer> lst = entry.getValue();
+			print(docid);
+			for(int i=0; i<lst.size(); i++) System.out.print(lst.get(i) + " ");
+			print(" ");
+		}
+	}
+	
+	public static HashMap<Integer, ArrayList<Integer>> buildDocumentVectorMap(RandomAccessFile freader) throws IOException {
+		HashMap<Integer, ArrayList<Integer>> documentVectorMap = new HashMap<>();
+		ArrayList<Integer> docVector;
+		String[] block;
+		int[] docIds;
+		int docid;
+		while((block = InvertedFileReaderWriter.getWordBlock(freader)) != null) {
+			docIds = InvertedFileReaderWriter.getDocIDList(block);
+			for(int i=0; i<docIds.length; i++) {
+				print("id : " + docIds[i]);
+				docid = docIds[i];
+				docVector = documentVectorMap.get(docid);
+				if(docVector == null) {
+					docVector = new ArrayList<Integer>();
+				}
+				docVector.add(InvertedFileReaderWriter.getTFfromDocumentEntry(block[i+1]));
+				documentVectorMap.put(docid, docVector);
+			}
+		}
+		return documentVectorMap;
+	}
+	
 	
 	public static int[] getLabelIDList(String[] block) {
 		int[] labelIDList = new int[block.length - 1];

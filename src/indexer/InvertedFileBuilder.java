@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+
 import mitos.stemmer.Stemmer;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -19,8 +21,8 @@ public class InvertedFileBuilder {
 	Queue<String> partialFileQueue;
 	private int partialFileIndex;
 	private String targetDirectory;
-	private HashMap<Integer, String> documents;
-	private HashMap<Integer, String> labels;
+	private TreeMap<Integer, String> documents;
+	private TreeMap<Integer, String> labels;
 	private TreeMap<String, PostingList> block;
 	
 	public InvertedFileBuilder(String documentsDirectory, String targetDirectory) {
@@ -30,8 +32,8 @@ public class InvertedFileBuilder {
 		Stemmer.Initialize();
 	}
 	
-	public HashMap<Integer, String> getDocIdToNameMap() { return this.documents; }
-	public HashMap<Integer, String> getLabelIdToNameMap() { return this.labels; }
+	public TreeMap<Integer, String> getDocIdToNameMap() { return this.documents; }
+	public TreeMap<Integer, String> getLabelIdToNameMap() { return this.labels; }
 	
 	public void buildInvertedFile() throws UnsupportedEncodingException, IOException {
 		for(int docid = 1; docid <= this.documents.size(); docid++) {
@@ -70,13 +72,46 @@ public class InvertedFileBuilder {
 			String partialFileOut = this.targetDirectory + "\\"  + this.partialFileIndex + ".txt";
 			String partialFileA = this.partialFileQueue.remove();
 			String partialFileB = this.partialFileQueue.remove();
-			InvertedFileReaderWriter.mergeTwoPartialIndexes(partialFileA, partialFileB, partialFileOut);
+			mergeTwoPartialIndexes(partialFileA, partialFileB, partialFileOut);
 			this.partialFileQueue.add(partialFileOut);
 		}
 		String mergedFilename = this.partialFileQueue.remove();
 		System.out.println(mergedFilename);
 		deletePartialIndexFiles(mergedFilename);
 		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\" + INVERTEDFILENAME);
+	}
+	
+	private void mergeTwoPartialIndexes(String fileA, String fileB, String fileOut) throws IOException {
+		RandomAccessFile freaderA = new RandomAccessFile(fileA, "r");
+		RandomAccessFile freaderB = new RandomAccessFile(fileB, "r");
+		RandomAccessFile fwriter = new RandomAccessFile(fileOut, "rw");
+		
+		String[] blockA = InvertedFileReaderWriter.getWordBlock(freaderA);
+		String[] blockB = InvertedFileReaderWriter.getWordBlock(freaderB);
+		int mergeBlockResult;
+		while((blockA != null) || (blockB != null)) {
+			if(blockA == null) {
+				InvertedFileReaderWriter.writeBlockToDisk(fwriter, blockB);
+				blockB = InvertedFileReaderWriter.getWordBlock(freaderB);
+			}
+			else if(blockB == null) {
+				InvertedFileReaderWriter.writeBlockToDisk(fwriter, blockA);
+				blockA = InvertedFileReaderWriter.getWordBlock(freaderA);
+			}
+			else {
+				mergeBlockResult = InvertedFileReaderWriter.mergeBlocks(blockA, blockB, fwriter);
+				if(mergeBlockResult == InvertedFileReaderWriter.EQUAL_BLOCKS) {
+					blockA = InvertedFileReaderWriter.getWordBlock(freaderA);
+					blockB = InvertedFileReaderWriter.getWordBlock(freaderB);
+				}
+				else if(mergeBlockResult == InvertedFileReaderWriter.BLOCKA_LESS) { blockA = InvertedFileReaderWriter.getWordBlock(freaderA); }
+				else if(mergeBlockResult == InvertedFileReaderWriter.BLOCKB_LESS) { blockB = InvertedFileReaderWriter.getWordBlock(freaderB); }
+				else { System.out.println("code should not be here (1)"); System.exit(1); }
+			}
+		}
+		freaderA.close();
+		freaderB.close();
+		fwriter.close();
 	}
 	
 	private void deletePartialIndexFiles(String fileToKeep) throws IOException {
@@ -102,13 +137,13 @@ public class InvertedFileBuilder {
 	
 	private void initDocumentIdMap(ArrayList<String> documents) {
 		int docid = 1;
-		this.documents = new HashMap<>();
+		this.documents = new TreeMap<>();
 		for(String document : documents) { this.documents.put(docid, document); docid += 1; }
 	}
 	
 	private void initLabelIdMap() {
 		int labelid = 1;
-		this.labels = new HashMap<>();
+		this.labels = new TreeMap<>();
 		for(String label : XmlLabelReader.labelNames) { this.labels.put(labelid, label); labelid += 1; }
 	}
 	

@@ -11,9 +11,9 @@ import java.util.TreeMap;
 
 public class InvertedFileReaderWriter {
 	
-	private static final int EQUAL_BLOCKS = 0;
-	private static final int BLOCKA_LESS = 1;
-	private static final int BLOCKB_LESS = 2;
+	static final int EQUAL_BLOCKS = 0;
+	static final int BLOCKA_LESS = 1;
+	static final int BLOCKB_LESS = 2;
 	
 	public static void writeIndexToDisk(String filename, TreeMap<String, PostingList> block) throws IOException {
 		FileWriter fwriter = new FileWriter(new File(filename));
@@ -29,47 +29,6 @@ public class InvertedFileReaderWriter {
 				fwriter.write("\n");
 			}
 		}
-		fwriter.close();
-	}
-	
-	public static void mergeTwoPartialIndexes(String fileA, String fileB, String fileOut) throws IOException {
-		RandomAccessFile freaderA = new RandomAccessFile(fileA, "r");
-		RandomAccessFile freaderB = new RandomAccessFile(fileB, "r");
-		RandomAccessFile fwriter = new RandomAccessFile(fileOut, "rw");
-		
-		String[] blockA = getWordBlock(freaderA);
-		String[] blockB = getWordBlock(freaderB);
-		int mergeBlockResult;
-		while((blockA != null) || (blockB != null)) {
-			if(blockA == null) {
-				writeBlockToDisk(fwriter, blockB);
-				blockB = getWordBlock(freaderB);
-			}
-			else if(blockB == null) {
-				writeBlockToDisk(fwriter, blockA);
-				blockA = getWordBlock(freaderA);
-			}
-			else {
-				mergeBlockResult = mergeBlocks(blockA, blockB, fwriter);
-				if(mergeBlockResult == EQUAL_BLOCKS) {
-					blockA = getWordBlock(freaderA);
-					blockB = getWordBlock(freaderB);
-				}
-				else if(mergeBlockResult == BLOCKA_LESS) {
-					blockA = getWordBlock(freaderA);
-				}
-				else if(mergeBlockResult == BLOCKB_LESS) {
-					blockB = getWordBlock(freaderB);
-				}
-				else {
-					print("code should not be here (1)");
-					System.exit(1);
-				}
-			}
-		}
-
-		freaderA.close();
-		freaderB.close();
 		fwriter.close();
 	}
 	
@@ -279,6 +238,10 @@ public class InvertedFileReaderWriter {
 	
 	public static int getDF(String[] block) {
 		return Integer.parseInt(block[0].split(" ")[1]);
+	}
+	
+	public static int getTFfromDocumentEntry(String docEntry) {
+		return Integer.parseInt(docEntry.split(" ")[1]);
 	}
 	
 	public static int getTF(String[] block) {
