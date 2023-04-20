@@ -26,9 +26,7 @@ public class PostingFileScanner {
 	public Integer[] getRelevantDocumentIds() {
 		StringBuilder sb = new StringBuilder();
 		for(String line : this.relevantDocumentsBlock) {
-			if(line.charAt(0) == 'd') {
-				sb.append(line.split(" ")[1]).append(",");
-			}
+			sb.append(line.split(" ")[0]).append(",");
 		}
 		String[] docIdsStr = sb.toString().split(",");
 		Integer[] docIdsInt = new Integer[docIdsStr.length];
@@ -44,7 +42,7 @@ public class PostingFileScanner {
 		int docCount = 0;
 		freader.seek(this.dptr);
 		while((line = freader.readLine()) != null) {
-			if(line.charAt(0) == 'd') { if(++docCount == this.df + 1) { break; } }
+			if(++docCount == this.df + 1) { break; } 
 			sb.append(line).append("\n");
 		}
 		this.relevantDocumentsBlock = sb.toString().split("\n");

@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 
 import mitos.stemmer.Stemmer;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
