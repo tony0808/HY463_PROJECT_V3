@@ -56,6 +56,14 @@ public class InvertedFileBuilder {
 		mergePartialIndexes();
 	}
 	
+	private void writePartialIndexToDisk() throws IOException {
+		this.partialFileIndex += 1;
+		String partialFilename = this.targetDirectory + "\\" + this.partialFileIndex + ".txt";
+		this.partialFileQueue.add(partialFilename);
+		InvertedFileReaderWriter.writeIndexToDisk(partialFilename, this.block);
+		this.block = new TreeMap<String, PostingList>();
+	}
+	
 	private void mergePartialIndexes() throws IOException {
 		while(this.partialFileQueue.size() > 1) {
 			this.partialFileIndex += 1;
@@ -66,16 +74,9 @@ public class InvertedFileBuilder {
 			this.partialFileQueue.add(partialFileOut);
 		}
 		String mergedFilename = this.partialFileQueue.remove();
+		System.out.println(mergedFilename);
 		deletePartialIndexFiles(mergedFilename);
 		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\" + INVERTEDFILENAME);
-	}
-
-	private void writePartialIndexToDisk() throws IOException {
-		this.partialFileIndex += 1;
-		String partialFilename = this.targetDirectory + "\\" + this.partialFileIndex + ".txt";
-		this.partialFileQueue.add(partialFilename);
-		InvertedFileReaderWriter.writeIndexToDisk(partialFilename, this.block);
-		this.block = new TreeMap<String, PostingList>();
 	}
 	
 	private void deletePartialIndexFiles(String fileToKeep) throws IOException {

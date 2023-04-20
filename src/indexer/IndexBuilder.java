@@ -38,9 +38,9 @@ public class IndexBuilder {
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
 		invertedBuilder.buildInvertedFile();
-		buildVocabularyAndPostingFile();
-		buildDocumentsFile();
-		buildLabelsFile();
+//		buildVocabularyAndPostingFile();
+//		buildDocumentsFile();
+//		buildLabelsFile();
 	}
 	
 	private void buildLabelsFile() throws IOException {
@@ -54,88 +54,12 @@ public class IndexBuilder {
 		fwriter.close();
 	}
 	
-	private void buildDocumentsFile() throws IOException {
-		buildDocumentNormMap();
-		HashMap<Integer, String> documentNamesMap = this.invertedBuilder.getDocIdToNameMap();
-		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + DOCUMENTSNAME));
-		for(Map.Entry<Integer, String> entry : documentNamesMap.entrySet()) {
-			int docid = entry.getKey();
-			String docName = entry.getValue();
-			Double docNorm = this.documentNormMap.get(docid);
-			fwriter.write(docid + " " + docName + " " + docNorm + "\n");
-		}
-		fwriter.close();
-	}
-	
-	private void buildVocabularyAndPostingFile() throws IOException {
-		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
-		RandomAccessFile vocabWriter = new RandomAccessFile(this.targetDirectory + "\\" + VOCABULARYNAME, "rw");
-		RandomAccessFile postingWriter = new RandomAccessFile(this.targetDirectory + "\\" + POSTINGFILENAME, "rw");
-
-		StringBuilder sb = new StringBuilder();
-		long docPointer = 0;
-		String[] block;
-		while((block = InvertedFileReaderWriter.getBlock(freader)) != null) {
-			String wordLine = block[0];
-			String word = wordLine.split(" ")[1];
-			String df = wordLine.split(" ")[2];
-			sb.append(word).append(" ").append(df).append(" ").append(docPointer).append("\n");
-			vocabWriter.writeBytes(sb.toString());
-			for(int i=1; i<block.length; i++) {
-				postingWriter.writeBytes(block[i] + '\n');
-			}
-			sb.setLength(0);
-			docPointer += (block.length - 1) + getTotalBlockSize(block);
-		}
-		freader.close();
-		vocabWriter.close();
-		postingWriter.close();
-	}
-	
 	private int getTotalBlockSize(String[] block) {
 		int size = 0;
 		for(int i=1; i<block.length; i++) {
 			size += block[i].length();
 		}
 		return size;
-	}
-	
-	private void buildDocumentNormMap() throws IOException {
-		initDocumentNormMap();
-		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
-		String[] block;
-		while((block = InvertedFileReaderWriter.getBlock(freader)) != null) {
-			for(String line : block) {
-				if(line.charAt(0) == 'd') {
-					int docid = Integer.parseInt(line.split(" ")[1]);
-					int tf = Integer.parseInt(line.split(" ")[2]);
-					ArrayList<Integer> docVector = this.documentVectorMap.get(docid);
-					docVector.add(tf);
-				}
-			}
-		}
-		calculateDocumentNorms();
-	}
-	
-	private void calculateDocumentNorms() {
-		for(Map.Entry<Integer, ArrayList<Integer>> docVectorEntry : this.documentVectorMap.entrySet()) {
-			int docid = docVectorEntry.getKey();
-			ArrayList<Integer> docVector = docVectorEntry.getValue();
-			double norm = 0.0;
-			for(int tf : docVector) {
-				norm += tf * tf;
-			}
-			norm = Math.sqrt(norm);
-			norm = Math.round(norm * Math.pow(10, 3));
-			this.documentNormMap.put(docid, norm);
-		}
-	}
-	
-	private void initDocumentNormMap() {
-		Set<Integer> docIdsSet = this.invertedBuilder.getDocIdToNameMap().keySet();
-		for(Integer docid : docIdsSet) {
-			this.documentVectorMap.put(docid, new ArrayList<Integer>());
-		}
 	}
 }
 
