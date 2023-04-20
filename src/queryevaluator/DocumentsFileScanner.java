@@ -7,18 +7,18 @@ import indexer.IndexBuilder;
 
 public class DocumentsFileScanner {
 	
-	private String documentsFileDirectory;
+	private String parentDirectory;
 	private String[] relevantDocumentsBlock;
-	private Integer[] docIds;
+	private int[] docIds;
 	
-	public DocumentsFileScanner(String documentsFileDirectory) { this.documentsFileDirectory = documentsFileDirectory; }
+	public DocumentsFileScanner(String parentDirectory) { this.parentDirectory = parentDirectory; }
 	
-	public DocumentsFileScanner(String documentsFileDirectory, Integer[] docIds) {
-		this.documentsFileDirectory = documentsFileDirectory;
+	public DocumentsFileScanner(String parentDirectory, int[] docIds) {
+		this.parentDirectory = parentDirectory;
 		this.docIds = docIds;
 	}
 	
-	public void setDocIds(Integer[] docIds) { this.docIds = docIds; }
+	public void setDocIds(int[] docIds) { this.docIds = docIds; }
 	
 	public String[] getRelevantDocuments() {
 		String[] relevantDocs = new String[this.relevantDocumentsBlock.length];
@@ -28,8 +28,8 @@ public class DocumentsFileScanner {
 		return relevantDocs;
 	}
 	
-	public void initRelevantDocumentsBlock() throws IOException {
-		String documentsFile = this.documentsFileDirectory + "\\" + IndexBuilder.DOCUMENTSNAME;
+	public void buildRelevantDocumentsBlock() throws IOException {
+		String documentsFile = this.parentDirectory + "\\" + IndexBuilder.DOCUMENTSNAME;
 		RandomAccessFile freader = new RandomAccessFile(documentsFile, "r");
 		StringBuilder sb = new StringBuilder();
 		String line;

@@ -23,18 +23,19 @@ public class PostingFileScanner {
 	public void setDF(int df) { this.df = df; }
 	public void setDPTR(int dptr) { this.dptr = dptr; }
 	
-	public Integer[] getRelevantDocumentIds() {
+	public int[] getRelevantDocIds() throws IOException {
+		buildRelevantDocumentsBlock();
 		StringBuilder sb = new StringBuilder();
 		for(String line : this.relevantDocumentsBlock) {
 			sb.append(line.split(" ")[0]).append(",");
 		}
 		String[] docIdsStr = sb.toString().split(",");
-		Integer[] docIdsInt = new Integer[docIdsStr.length];
+		int[] docIdsInt = new int[docIdsStr.length];
 		for(int i=0; i<docIdsStr.length; i++) { docIdsInt[i] = Integer.parseInt(docIdsStr[i]); }
 		return docIdsInt;
 	}
 	
-	public void initRelevantDocumentsBlock() throws IOException {
+	private void buildRelevantDocumentsBlock() throws IOException {
 		String postingFile = this.postingFileDirectory + "\\" + IndexBuilder.POSTINGFILENAME;
 		RandomAccessFile freader = new RandomAccessFile(postingFile, "r");
 		StringBuilder sb = new StringBuilder();

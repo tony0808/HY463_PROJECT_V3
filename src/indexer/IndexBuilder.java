@@ -12,23 +12,23 @@ import java.util.TreeMap;
 
 public class IndexBuilder {
 	
+	public static final String INVERTEDFILENAME = "InvertedFile.txt";
 	public static final String VOCABULARYNAME = "Vocabulary.txt";
 	public static final String DOCUMENTSNAME = "Documents.txt";
 	public static final String LABELSNAME = "Labels.txt";
 	public static final String POSTINGFILENAME = "PostingFile.txt";
+	public static final String DOCVECTORFILENAME = "DocumentsVector.txt";
 	
 	private String targetDirectory;
 	private String corpusDirectory;
 	private InvertedFileBuilder invertedBuilder;
+	private DocumentVectorFileBuilder docVectorBuilder;
 	
-	public String getVocabularyName() { return VOCABULARYNAME; }
-	public String getDocumentsFileName() { return DOCUMENTSNAME; }
-	public String getLabelsFileName() { return LABELSNAME; }
-	public String getPostingFileName() { return POSTINGFILENAME; }
 	public IndexBuilder(String corpusDirectory, String targetDirectory) {
 		this.corpusDirectory = corpusDirectory;
 		this.targetDirectory = targetDirectory;
 		this.invertedBuilder = new InvertedFileBuilder(this.corpusDirectory, this.targetDirectory);
+		this.docVectorBuilder = new DocumentVectorFileBuilder(this.targetDirectory);
 	}
 	
 	public void buildIndex() throws UnsupportedEncodingException, IOException {
@@ -36,10 +36,11 @@ public class IndexBuilder {
 		buildVocabularyAndPostingFile();
 		buildDocumentsFile();
 		buildLabelsFile();
+		buildDocumentsVectorsFile();
 	}
 	
 	private void buildVocabularyAndPostingFile() throws IOException {
-		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
+		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + INVERTEDFILENAME, "r");
 		RandomAccessFile vocabWriter = new RandomAccessFile(this.targetDirectory + "\\" + VOCABULARYNAME, "rw");
 		RandomAccessFile postingWriter = new RandomAccessFile(this.targetDirectory + "\\" + POSTINGFILENAME, "rw");
 		
@@ -62,7 +63,7 @@ public class IndexBuilder {
 	}
 	
 	private void buildDocumentsFile() throws IOException {
-		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + InvertedFileBuilder.INVERTEDFILENAME, "r");
+		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + INVERTEDFILENAME, "r");
 		FileWriter fwriter = new FileWriter(new File(this.targetDirectory + "\\" + DOCUMENTSNAME));
 		TreeMap<Integer, String> documents = this.invertedBuilder.getDocIdToNameMap();
 		HashMap<Integer, ArrayList<Integer>> docVectorMap = buildDocumentVectorMap(freader);
@@ -124,6 +125,11 @@ public class IndexBuilder {
 			fwriter.write(labelid + " " + labelName + "\n");
 		}
 		fwriter.close();
+	}
+	
+	private void buildDocumentsVectorsFile() throws IOException {
+		this.docVectorBuilder.setNumDocs(this.invertedBuilder.getDocIdToNameMap().size());
+		this.docVectorBuilder.buildDocumentVectorFile();
 	}
 	
 	private int getTotalBlockSize(String[] block) {

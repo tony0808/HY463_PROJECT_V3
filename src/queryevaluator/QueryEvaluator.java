@@ -1,7 +1,8 @@
 package queryevaluator;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.TreeSet;
 
 public class QueryEvaluator {
 	
@@ -17,18 +18,36 @@ public class QueryEvaluator {
 		this.docScanner = new DocumentsFileScanner(parentDirectory);
 	}
 	
+	public void setQuery(String query) { this.query = query; }
+	
+	public TreeSet<Integer> getUnionOfDocIds() throws IOException {
+		TreeSet<Integer> docIDUnion = new TreeSet<Integer>();
+		int df, dptr;
+		String[] words = this.query.split(" ");
+		for(String word : words) {
+			df = this.vocLoader.getDF(word);
+			dptr = this.vocLoader.getDPTR(word);
+			if(df == -1 || dptr == -1) { System.out.println("'" + word + "'" + " is not found in vocabulary :("); System.exit(1);}
+			this.pFscanner.setDF(df);
+			this.pFscanner.setDPTR(dptr);
+			for(int i : this.pFscanner.getRelevantDocIds()) {
+				docIDUnion.add(i);
+			}
+		}
+		return docIDUnion;
+	}
+	
 	public void printRelevantDocuments() throws IOException {
 		int df = this.vocLoader.getDF(query);
 		int dptr = this.vocLoader.getDPTR(query);
 		if(df == -1 || dptr == -1) { System.out.println("Query is not found in vocabulary :("); System.exit(1);}
 		this.pFscanner.setDF(df);
 		this.pFscanner.setDPTR(dptr);
-		this.pFscanner.initRelevantDocumentsBlock();
-		Integer[] docIds = pFscanner.getRelevantDocumentIds();
+		int[] docIds = pFscanner.getRelevantDocIds();
 		this.docScanner.setDocIds(docIds);
-		this.docScanner.initRelevantDocumentsBlock();
+		this.docScanner.buildRelevantDocumentsBlock();
 		String[] docNames = this.docScanner.getRelevantDocuments();
-		for(String relDoc : docNames) {
+		for(int relDoc : docIds) {
 			System.out.println(relDoc);
 		}
 	}

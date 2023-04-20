@@ -201,6 +201,14 @@ public class InvertedFileReaderWriter {
 		return docIDList;
 	}
 	
+	public static int[] getTFList(String[] block) {
+		int[] tfList = new int[block.length - 1];
+		for(int i=1; i<block.length; i++) {
+			tfList[i-1] = getTFfromDocumentEntry(block[i]);
+		}
+		return tfList;
+	}
+	
 	public static int getLF(String docentry) {
 		int i=0;
 		int start=0, end=0;

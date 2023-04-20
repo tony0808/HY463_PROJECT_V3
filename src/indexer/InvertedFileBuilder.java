@@ -7,7 +7,6 @@ import java.io.RandomAccessFile;
 
 import mitos.stemmer.Stemmer;
 import java.io.UnsupportedEncodingException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -15,7 +14,6 @@ import java.io.File;
 
 public class InvertedFileBuilder {
 	
-	protected static final String INVERTEDFILENAME = "InvertedFile.txt";
 	private final long MAX_BLOCK_SIZE = 200L * 1024L * 1024L; 
 	
 	Queue<String> partialFileQueue;
@@ -80,7 +78,7 @@ public class InvertedFileBuilder {
 		}
 		String mergedFilename = this.partialFileQueue.remove();
 		deletePartialIndexFiles(mergedFilename);
-		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\" + INVERTEDFILENAME);
+		renameFinalMergedFile(mergedFilename, this.targetDirectory + "\\" + IndexBuilder.INVERTEDFILENAME);
 	}
 	
 	private void mergeTwoPartialIndexes(String fileA, String fileB, String fileOut) throws IOException {
