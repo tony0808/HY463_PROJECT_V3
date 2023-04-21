@@ -2,6 +2,7 @@ package queryevaluator;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Map;
 import java.util.TreeMap;
 
 import indexer.IndexBuilder;
@@ -26,6 +27,16 @@ public class VocabularyLoader {
 	
 	public int getDF(String word) { return  this.vocabulary.containsKey(word) ? this.vocabulary.get(word).getDF() : -1; }
 	public int getDPTR(String word) { return  this.vocabulary.containsKey(word) ? this.vocabulary.get(word).getDPTR() : -1; }
+	public int getSize() { return this.vocabulary.size(); }
+	
+	public long getIndex(String word) {
+		long index = 0L;
+		for(Map.Entry<String, VocabData> entry : this.vocabulary.entrySet()) {
+			if(entry.getKey().equals(word)) { break; }
+			index++;
+		}
+		return index;
+	}
 	
 	private void loadVocabulary() throws IOException {
 		String vocabFilename = this.targetDirectory + "\\" + IndexBuilder.VOCABULARYNAME;

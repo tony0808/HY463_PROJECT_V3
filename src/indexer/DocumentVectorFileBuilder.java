@@ -50,20 +50,20 @@ public class DocumentVectorFileBuilder {
 		String[] block;
 		int[] tFs;
 		int[] docIds;
-		double weight, idf;
+		double[] tfNorm;
+		double weight, tf, idf;
 		long index = 0L;
-		int docid, tf;
+		int docid;
 		while((block = InvertedFileReaderWriter.getWordBlock(freader)) != null) {
 			docIds = InvertedFileReaderWriter.getDocIDList(block);
 			tFs = InvertedFileReaderWriter.getTFList(block);
+			tfNorm = getTFnormalized(tFs);
 			idf = getIDF(InvertedFileReaderWriter.getDF(block));
 			for(int i=0; i<docIds.length; i++) {
 				docid = docIds[i];
-				tf = tFs[i];
+				tf = tfNorm[i];
 				weights = documentVectors.get(docid);
-				if(weights == null) {
-					weights = new TreeMap<Long, Double>();
-				}
+				if(weights == null) { weights = new TreeMap<Long, Double>(); }
 				weight = tf * idf;
 				weight = (double) (Math.round(weight*1000.0)/1000.0);
 				weights.put(index, weight);
@@ -74,8 +74,19 @@ public class DocumentVectorFileBuilder {
 		return documentVectors;
 	}
 	
-	private double getIDF(int df) {
-		return Math.log(this.num_docs / (double)df);
+	private double[] getTFnormalized(int[] tf) {
+		int maxTF = getMaxTF(tf);
+		double[] tfNorm = new double[tf.length];
+		for(int i=0; i<tf.length; i++) { tfNorm[i] = (double) tf[i] / maxTF; }
+		return tfNorm;
+	}
+	
+	private double getIDF(int df) { return Math.log(this.num_docs / (double)df); }
+	
+	private int getMaxTF(int[] tf) {
+		int max = tf[0];
+		for(int i=0; i<tf.length; i++) { if(tf[i] > max) { max = tf[i]; } }
+		return max;
 	}
 }
 

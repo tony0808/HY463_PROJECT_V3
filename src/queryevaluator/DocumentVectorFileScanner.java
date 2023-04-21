@@ -13,16 +13,15 @@ public class DocumentVectorFileScanner {
 	private String parentDirectory;
 	private int[] docIds;
 	
-	public DocumentVectorFileScanner(String parentDirectory, int[] docIds) throws IOException {
-		this.docIds = docIds;
+	public DocumentVectorFileScanner(String parentDirectory) throws IOException {
 		this.parentDirectory = parentDirectory;
 		this.documentsVectorMap = new HashMap<>();
-		buildDocumentsVectorMap();
 	}
 	
+	public void setDocIds(int[] docIds) { this.docIds = docIds; }
 	public TreeMap<Long, Double> getDocumentVector(int docid) { return this.documentsVectorMap.get(docid); }
-	
-	private void buildDocumentsVectorMap() throws IOException {
+
+	public void buildDocumentsVectorMap() throws IOException {
 		String docsVectorFile = this.parentDirectory + "\\" + IndexBuilder.DOCVECTORFILENAME;
 		RandomAccessFile freader = new RandomAccessFile(docsVectorFile, "r");
 		TreeMap<Long, Double> docVector;
@@ -31,9 +30,11 @@ public class DocumentVectorFileScanner {
 		int docid;
 		while((line = freader.readLine()) != null) {
 			docid = getDocId(line);
+			if(index == this.docIds.length) break;
 			if(docid == this.docIds[index]) {
 				docVector = getDocumentVector(line);
 				this.documentsVectorMap.put(docid, docVector);
+				index++;
 			}
 		}
 		freader.close();

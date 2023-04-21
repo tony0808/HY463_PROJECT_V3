@@ -35,11 +35,13 @@ public class InvertedFileBuilder {
 	public TreeMap<Integer, String> getLabelIdToNameMap() { return this.labels; }
 	
 	public void buildInvertedFile() throws UnsupportedEncodingException, IOException {
+		Tokenizer tokenizer;
+		PostingList postingList;
 		for(int docid = 1; docid <= this.documents.size(); docid++) {
 			for(int labelid = 1; labelid <= this.labels.size(); labelid++) {
-				Tokenizer tokenizer = new Tokenizer((new XmlLabelReader(documents.get(docid))).getLabelText(this.labels.get(labelid)));
+				tokenizer = new Tokenizer((new XmlLabelReader(documents.get(docid))).getLabelText(this.labels.get(labelid)));
 				for(Map.Entry<String, ArrayList<Integer>> token : tokenizer.get_tokens().entrySet()) {
-					PostingList postingList = block.get(token.getKey());
+					postingList = block.get(token.getKey());
 					if(postingList == null) {
 						postingList = new PostingList();
 						postingList.addNewPostingList(docid, labelid, token.getValue());
