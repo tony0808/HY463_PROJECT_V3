@@ -17,7 +17,7 @@ public class Tokenizer {
 	public Tokenizer(String text) {  this.text = text; this.wordPositionMap = new HashMap<>(); tokenize(); }
 	
 	public HashMap<String, ArrayList<Integer>> get_tokens() { return this.wordPositionMap; }
- 	
+	
 	private void tokenize() {
 		Pattern pattern = Pattern.compile(WORD_REGEX);
 		Matcher matcher = pattern.matcher(this.text);

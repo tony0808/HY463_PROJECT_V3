@@ -2,6 +2,7 @@ package queryevaluator;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.HashMap;
 
 import indexer.IndexBuilder;
 
@@ -23,25 +24,47 @@ public class DocumentsFileScanner {
 	public int getNumDocs() { return this.num_docs; }
 	public void setDocIds(int[] docIds) { this.docIds = docIds; }
 	
-	public String[] getRelevantDocuments() {
-		String[] relevantDocs = new String[this.relevantDocumentsBlock.length];
-		for(int i=0; i<this.relevantDocumentsBlock.length; i++) { relevantDocs[i] = this.relevantDocumentsBlock[i].split(" ")[1]; }
-		return relevantDocs;
-	}
-	
-	public void buildRelevantDocumentsBlock() throws IOException {
+	public HashMap<Integer, String> getDocumentNames() throws IOException {
 		String documentsFile = this.parentDirectory + "\\" + IndexBuilder.DOCUMENTSNAME;
 		RandomAccessFile freader = new RandomAccessFile(documentsFile, "r");
-		StringBuilder sb = new StringBuilder();
-		String line;
+		HashMap<Integer, String> docidToNameMap = new HashMap<>();
+		int index = 0;
 		int docid;
+		String line;
 		while((line = freader.readLine()) != null) {
+			if(index == this.docIds.length) break;
 			docid = Integer.parseInt(line.split(" ")[0]);
-			if(isDocIdRelevant(docid)) { sb.append(line).append("\n"); }
+			if(docid == this.docIds[index]) {docidToNameMap.put(docid, line.split(" ")[1]); index++; }
 		}
-		this.relevantDocumentsBlock = sb.toString().split("\n");
 		freader.close();
+		return docidToNameMap;
 	}
+	
+	
+//	private String[] getRelevantDocuments() {
+//		String[] relevantDocs = new String[this.relevantDocumentsBlock.length];
+//		for(int i=0; i<this.relevantDocumentsBlock.length; i++) { relevantDocs[i] = this.relevantDocumentsBlock[i].split(" ")[1]; }
+//		return relevantDocs;
+//	}
+//	
+//	private void buildRelevantDocumentsBlock() throws IOException {
+//		String documentsFile = this.parentDirectory + "\\" + IndexBuilder.DOCUMENTSNAME;
+//		RandomAccessFile freader = new RandomAccessFile(documentsFile, "r");
+//		StringBuilder sb = new StringBuilder();
+//		String line;
+//		int docid;
+//		while((line = freader.readLine()) != null) {
+//			docid = Integer.parseInt(line.split(" ")[0]);
+//			if(isDocIdRelevant(docid)) { sb.append(line).append("\n"); }
+//		}
+//		this.relevantDocumentsBlock = sb.toString().split("\n");
+//		freader.close();
+//	}
+//	
+//	private boolean isDocIdRelevant(int docid) {
+//		for(Integer id : this.docIds) { if(id == docid) return true; }
+//		return false;
+//	}
 	
 	public double getDocumentNorm(int docid) throws IOException {
 		String documentsFile = this.parentDirectory + "\\" + IndexBuilder.DOCUMENTSNAME;
@@ -57,11 +80,6 @@ public class DocumentsFileScanner {
 		}
 		freader.close();
 		return norm;
-	}
-	
-	private boolean isDocIdRelevant(int docid) {
-		for(Integer id : this.docIds) { if(id == docid) return true; }
-		return false;
 	}
 	
 	private void setNumDocs() throws IOException {

@@ -1,6 +1,7 @@
 package queryevaluator;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -19,23 +20,43 @@ public class QueryEvaluator {
 	
 	public QueryEvaluator(String query, String parentDirectory) throws IOException { 
 		this.query = query;
-		this.scoresMap = new TreeMap<Double, Integer>();
+		this.scoresMap = new TreeMap<Double, Integer>(Comparator.reverseOrder());
 		this.queryVector = new TreeMap<Long, Double>();
 		this.vocLoader = new VocabularyLoader(parentDirectory);
 		this.pFscanner = new PostingFileScanner(parentDirectory);
 		this.docScanner = new DocumentsFileScanner(parentDirectory);
 		this.docVecScanner = new DocumentVectorFileScanner(parentDirectory);
+		proceessQuery();
 	}
 	
 	public TreeMap<Double, Integer> getQueryScores() { return this.scoresMap; }
-	public void setQuery(String query) { this.query = query; }
+	public void setQuery(String query) { this.query = query; proceessQuery(); }
+	
+	public void printQueryScores() throws IOException {
+		int docid;
+		double score;
+		HashMap<Integer, String> docnames = this.docScanner.getDocumentNames();
+		String docname;
+        int maxLength = 0;
+        int padding;
+        for (String value : docnames.values()) { maxLength = Math.max(maxLength, value.length()); }
+		for(Map.Entry<Double, Integer> entry : this.scoresMap.entrySet()) {
+			score = entry.getKey();
+			docid = entry.getValue();
+			docname = docnames.get(docid);
+			padding = maxLength - docname.length();
+            System.out.println(docname + ": " + " ".repeat(padding) + score);
+		}
+	}
 	
 	public void setQueryScores() throws IOException {
 		double innerProduct;
 		double magnitudeProduct;
 		double score;
+		int index = 0;
 		TreeMap<Long, Double> docVector;
 		TreeSet<Integer> docIDUnion = getUnionOfDocIds();
+		int[] docIds = new int[docIDUnion.size()];
 		setDocumentVectorMap(docIDUnion);
 		setQueryVector();
 		for(int docid : docIDUnion) {
@@ -44,8 +65,17 @@ public class QueryEvaluator {
 			magnitudeProduct = getMagProduct(docid);
 			score = innerProduct / magnitudeProduct;
 			this.scoresMap.put(score, docid);
+			docIds[index++] = docid;
 		}
-		System.out.println(this.scoresMap);
+		this.docScanner.setDocIds(docIds);
+	}
+	
+	private void proceessQuery() {
+		this.query = (new QueryProcessor(this.query, this.vocLoader)).getProcessedQuery();
+		if(this.query.length() == 0) {
+			System.out.println("Your query is empty after processing it. Expand it a little.");
+			System.exit(1);
+		}
 	}
 	
 	private void setDocumentVectorMap(TreeSet<Integer> docsids) throws IOException {
