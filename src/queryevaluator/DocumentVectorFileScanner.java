@@ -19,14 +19,22 @@ public class DocumentVectorFileScanner {
 		RandomAccessFile freader = new RandomAccessFile(docsVectorFile, "r");
 		HashMap<Long, Double> docVector = null;
 		String line;
-		while((line = freader.readLine()) != null) {
-			if(Integer.parseInt(line.split(" ")[0]) == docid) {
-				docVector = parseVector(line);
-			}
-		}
+		freader.seek(getDocumentFilePointer(docid));
+		line = freader.readLine();
+		docVector = parseVector(line);
 		freader.close();
 		return docVector;
 	}
+	
+	public long getDocumentFilePointer(int docid) throws IOException {
+		String docPtrFile = this.parentDirectory + "\\" + IndexBuilder.DOCVECPTRFILENAME;
+		RandomAccessFile freader = new RandomAccessFile(docPtrFile, "r");
+		String line;
+		long ptr = -1;
+		while((line = freader.readLine()) != null) { if(Integer.parseInt(line.split(" ")[0]) == docid) { ptr = Long.parseLong(line.split(" ")[1]); break; } }
+		freader.close();
+		return ptr;
+ 	}
 	
 	private HashMap<Long, Double> parseVector(String line) {
 		HashMap<Long, Double> docVector = new HashMap<Long, Double>();

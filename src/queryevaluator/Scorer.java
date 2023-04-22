@@ -1,6 +1,7 @@
 package queryevaluator;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,20 +10,24 @@ public class Scorer {
 	
 	private DocumentFileScanner docFileScanner;
 	private TreeMap<Double, Integer> scores;
-	private String parentDirectory;
 	
-	public Scorer(String parentDirectory) { 
-		this.scores = new TreeMap<>(); 
-		this.parentDirectory = parentDirectory;
+	public Scorer(String parentDirectory) {
+		this.scores = new TreeMap<>(Collections.reverseOrder()); 
 		this.docFileScanner = new DocumentFileScanner();
 		this.docFileScanner.setParentDirectory(parentDirectory);
 	}
 	
-	public void addScore(double score, int docid) { this.scores.put(score, docid); }
+	public void addScore(double score, int docid) throws IOException { this.scores.put(score, docid); }
 	
-	public void printScores() {
+	public void printScores() throws IOException {
+		String docname;
+		double score;
+		int docid;
 		for(Map.Entry<Double, Integer> entry : this.scores.entrySet()) {
-			System.out.println(entry.getKey() + " : " + entry.getValue());
+			score = entry.getKey();
+			docid = entry.getValue();
+			docname = this.docFileScanner.getDocumentName(docid);
+			System.out.println("Score : " + score + "\n" + docname + "\n");
 		}
 	}
 	

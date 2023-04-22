@@ -18,6 +18,7 @@ public class IndexBuilder {
 	public static final String LABELSNAME = "Labels.txt";
 	public static final String POSTINGFILENAME = "PostingFile.txt";
 	public static final String DOCVECTORFILENAME = "DocumentsVector.txt";
+	public static final String DOCVECPTRFILENAME = "DocumentVecPointers.txt";
 	
 	private String targetDirectory;
 	private String corpusDirectory;
@@ -130,6 +131,7 @@ public class IndexBuilder {
 	private void buildDocumentsVectorsFile() throws IOException {
 		this.docVectorBuilder.setNumDocs(this.invertedBuilder.getDocIdToNameMap().size());
 		this.docVectorBuilder.buildDocumentVectorFile();
+		this.docVectorBuilder.buildDocumentVectorPointerFile();
 	}
 	
 	private int getTotalBlockSize(String[] block) {

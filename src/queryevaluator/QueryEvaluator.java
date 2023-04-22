@@ -6,7 +6,6 @@ import java.util.HashSet;
 
 public class QueryEvaluator {
 	
-	private int[] docIDs;
 	private String query;
 	private String parentDirectory;
 	private HashMap<Long, Double> queryVector;
@@ -19,7 +18,6 @@ public class QueryEvaluator {
 	
 	public QueryEvaluator(String parentDirectory) throws IOException {
 		this.vocabulary = (new VocabularyLoader(parentDirectory)).getVocabulary();
-		this.docIDs = (new DocumentFileScanner(parentDirectory)).getDocumentIds();
 		this.docVectorFileScanner = new DocumentVectorFileScanner(parentDirectory);
 		this.pFscanner = new PostingFileScanner(parentDirectory);
 		this.queryProcessor = new QueryProcessor(this.vocabulary);
@@ -31,13 +29,11 @@ public class QueryEvaluator {
 	
 	public void setQuery(String query) { this.query = query; }
 	
-	public void evaluateQuery() throws IOException {
+	public void evaluateQuery() throws IOException {	
 		processQuery();
 		setQueryVector();
 		HashSet<Integer> docIds = getUnionOfRelevantDocumentsIds(this.query.split(" "));
-		for(Integer docid : docIds) {
-			calculateDocumentScore(docid);
-		}
+		for(Integer docid : docIds) { calculateDocumentScore(docid); }
 		this.scorer.printScores();
 	}
 	

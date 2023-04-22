@@ -8,12 +8,14 @@ import java.util.TreeMap;
 
 public class DocumentVectorFileBuilder {
 	
+	private HashMap<Integer, Long> docidToPointer;
 	private String targetDirectory;
 	private int num_docs;
 	
 	public DocumentVectorFileBuilder(String targetDirectory) {
 		this.num_docs = -1;
 		this.targetDirectory = targetDirectory;
+		this.docidToPointer = new HashMap<>();
 	}
 	
 	public DocumentVectorFileBuilder(String targetDirectory, int num_docs) {
@@ -21,26 +23,44 @@ public class DocumentVectorFileBuilder {
 		this.num_docs = num_docs;
 	}
 	
-	public void setNumDocs(int num_docs) {
-		this.num_docs = num_docs;
-	}
+	public HashMap<Integer, Long> getDocidToPointerMap() { return this.docidToPointer; }
+	public void setNumDocs(int num_docs) { this.num_docs = num_docs; }
 	
 	public void buildDocumentVectorFile() throws IOException {
 		RandomAccessFile freader = new RandomAccessFile(this.targetDirectory + "\\" + IndexBuilder.INVERTEDFILENAME, "r");
 		RandomAccessFile fwriter = new RandomAccessFile(this.targetDirectory + "\\" + IndexBuilder.DOCVECTORFILENAME, "rw");
 		HashMap<Integer, TreeMap<Long, Double>> documentVectorsMap = buildDocumentVectorsMap(freader);
+		long pointer = 0;
+		long lineSize;
+		String line = "";
 		for(Map.Entry<Integer, TreeMap<Long, Double>> entry : documentVectorsMap.entrySet()) {
 			int docid = entry.getKey();
 			TreeMap<Long, Double> weightsMap = entry.getValue();
-			fwriter.writeBytes(String.valueOf(docid));
+			this.docidToPointer.put(docid, pointer);
+			lineSize = 0;
 			for(Map.Entry<Long, Double> weightsEntry : weightsMap.entrySet()) {
 				long index = weightsEntry.getKey();
 				double weight = weightsEntry.getValue();
-				fwriter.writeBytes(" " + index + "," + weight);
+				line = " " + index + "," + weight;
+				lineSize += line.length();
+				fwriter.writeBytes(line);
 			}
-			fwriter.writeBytes("\n");
+			pointer += lineSize + 1;
+			fwriter.write('\n');
 		}
 		freader.close();
+		fwriter.close();
+	}
+	
+	public void buildDocumentVectorPointerFile() throws IOException {
+		RandomAccessFile fwriter = new RandomAccessFile(this.targetDirectory + "\\" + IndexBuilder.DOCVECPTRFILENAME, "rw");
+		int docid;
+		long ptr;
+		for(Map.Entry<Integer, Long> entry : this.docidToPointer.entrySet()) {
+			docid = entry.getKey();
+			ptr = entry.getValue();
+			fwriter.writeBytes(docid + " " + ptr + "\n");
+		}
 		fwriter.close();
 	}
 	
