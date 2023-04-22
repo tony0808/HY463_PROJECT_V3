@@ -1,28 +1,24 @@
 package queryevaluator;
 
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import indexer.FileWordReader;
 import mitos.stemmer.Stemmer;
 
 public class QueryProcessor {
-	
 	private static final String STOPWORDFILENAME = "C:\\Users\\Admin\\Desktop\\earino_2023\\hy463\\project\\2023-3-EkftonisiResourcesSoftware\\3_Resources_Stoplists\\stopwordsEn.txt";
 	private static String[] stopwords = (new FileWordReader(STOPWORDFILENAME)).getWords();
 	private static final String WORD_REGEX = "\\b[a-zA-Z_]+\\b";
 	
+	private HashMap<String, VocabData> vocabulary;
 	private String query;
-	private String processedQuery;
-	private VocabularyLoader vocabLoader;
 	
-	public QueryProcessor(String query, VocabularyLoader vocabLoader) { 
-		this.vocabLoader = vocabLoader;
-		this.query = query; processQuery(); 
-		Stemmer.Initialize(); 
-	}
-	public String getProcessedQuery() { return this.processedQuery; }
+	public QueryProcessor(HashMap<String, VocabData> vocabulary) { Stemmer.Initialize(); this.vocabulary = vocabulary; }
+	public void setQuery(String query) { this.query = query; }
 	
-	private void processQuery() {
+	public String getProcessedQuery() {
 		Pattern pattern = Pattern.compile(WORD_REGEX);
 		Matcher matcher = pattern.matcher(this.query);
 		String word;
@@ -30,11 +26,11 @@ public class QueryProcessor {
 		while(matcher.find()) {
 			word = matcher.group();
 			if(isWordStopword(word)) continue;
-			if(this.vocabLoader.getDF(word) == -1) continue;
+			if(!this.vocabulary.containsKey(word)) continue;
 			word = Stemmer.Stem(word);
 			sb.append(word).append(" ");
  		}
-		this.processedQuery = sb.toString();
+		return sb.toString();
 	}
 	
 	private boolean isWordStopword(String word) {
